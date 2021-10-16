@@ -18,4 +18,3 @@ export const ethConnect = async () => {
   }
   return null
 }
-
