@@ -1,4 +1,6 @@
-const hre = require("hardhat")
+const hre = require('hardhat')
+const fs = require('fs')
+const config = require('../config')
 
 async function main() {
   const [deployer] = await ethers.getSigners()
@@ -17,9 +19,9 @@ async function main() {
 
   switch (hre.network.name) {
     case 'kovan': {
-      VRFCoordinator = "0xdD3782915140c8f3b190B5D67eAc6dc5760C46E9";
-      LinkToken = "0xa36085F69e2889c224210F603D836748e7dC0088";
-      keyhash = "0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4";
+      VRFCoordinator = config.VRFContract.Kovan.VRFCoordinator
+      LinkToken = config.VRFContract.Kovan.LINKToken
+      keyhash = config.VRFContract.Kovan.KeyHash
       break
     }
 
@@ -27,14 +29,14 @@ async function main() {
       break
   }
 
-  console.log("------")
-  console.log("network name: ", hre.network.name)
-  console.log("Deployer: " + deployer);
-  console.log("uri: " + contractUri);
-  console.log("name: " + contractName);
-  console.log("symbol: " + contractSymbol);
-  console.log('tokenAmount: ', tokenAmount);
-  console.log("------")
+  console.log('------')
+  console.log('network name: ', hre.network.name)
+  console.log('Deployer: ' + deployer)
+  console.log('uri: ' + contractUri)
+  console.log('name: ' + contractName)
+  console.log('symbol: ' + contractSymbol)
+  console.log('tokenAmount: ', tokenAmount)
+  console.log('------')
 
   const StarNft = await ethers.getContractFactory('StarNft')
   const token = await StarNft.deploy(
@@ -44,6 +46,17 @@ async function main() {
     LinkToken,
     keyhash
   )
+
+  const deployData = {
+    contractAddress: token.address,
+    baseMetadataUri,
+    tokenAmount,
+    deployer: deployer.address
+  }
+  fs.writeFileSync('./src/contracts/config.json', JSON.stringify(deployData, null, 2))
+
+  const contractJson = require('../artifacts/contracts/StarNft.sol/StarNft.json')
+  fs.writeFileSync('./src/contracts/StarNft.json', JSON.stringify(contractJson, null, 2))
 
   console.log('Token address:', token.address)
 }

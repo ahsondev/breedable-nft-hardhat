@@ -26,10 +26,8 @@ describe('Token contract', function () {
   })
   
   it('Mint', async function() {
-    const prevBalance = await hardhatToken.balanceOf(owner.address);
-    console.log(prevBalance)
+    const token = await hardhatToken.requestRandomNFT(owner.address, 1)
+    const remainTokenAmount = await hardhatToken.remainTokenCount()
     expect(1).to.equal(1)
-    // const remainTokenAmount = await hardhatToken.remainTokenCount()
-    // expect(remainTokenAmount).to.equal(tokenAmount - tokenBalance)
   })
 })

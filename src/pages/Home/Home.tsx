@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { ethConnect } from 'utils/web3_api'
-import config from 'utils/config'
+import { ethConnect, getEthBalance, getPrice, getRemainTokenCount, getMintedTokenCount } from 'utils/web3_api'
+import contractConfig from 'contracts/config.json'
+import Loader from 'components/Loader'
 
 interface Props {
 }
@@ -13,34 +14,33 @@ const Home = (props: Props) => {
   const [ contractBalance, setContractBalance ] = useState(0)
   const [ web3, setWeb3 ] = useState<any>(null)
   const [ accountBalance, setAccountBalance ] = useState(0)
+  const [ loading, setLoading ] = useState(false)
 
   useEffect(() => {
-    console.log(config)
   }, [])
 
   const connectMetamask = async (e: any) => {
+    setLoading(true)
     const web3Res = await ethConnect()
     if (web3Res) {
-      console.log(web3Res)
       setWeb3(web3Res)
-      web3Res.eth.getAccounts().then((res: any) => setMetamaskAccount(res?.[0]))
+      web3Res.eth.getAccounts().then((res: any) => {
+        const account = res?.[0]
+        setMetamaskAccount(account)
+
+        getEthBalance(account).then(res => {setAccountBalance(res)}, err => {})
+        getPrice().then(res => {setPrice(res)}, err => {})
+        getRemainTokenCount().then(res => {setRemainingCount(res)}, err => {})
+        getMintedTokenCount().then(res => {setSoldCount(res)}, err => {})
+        getEthBalance(contractConfig.contractAddress).then(res => {setContractBalance(res)}, err => {})
+      }).finally(() => setLoading(false))
     }
   }
 
-  const getAccountBalance = async (e: any) => {
-    const _balance = await web3.eth.getBalance(metamaskAccount)
-    setAccountBalance(web3.utils.fromWei(_balance, 'ether'))
+  const setMint = () => {
+    setLoading(true)
+
   }
-
-  const getPrice = (e: any) => {}
-
-  const getSold = (e: any) => {}
-
-  const getRemaining = (e: any) => {}
-
-  const getContractBalance = (e: any) => {}
-
-  const setMint = (e: any) => {}
 
   return (
     <div className='home-page'>
@@ -65,41 +65,42 @@ const Home = (props: Props) => {
           </div>
         </div>
         <div className="d-flex flex-column">
-          <button type='button' className='btn btn-success' onClick={getAccountBalance} disabled={!metamaskAccount}>Account balance</button>
+          <button type='button' className='btn btn-success' disabled={!metamaskAccount}>Account balance</button>
           <div className="btn btn-secondary">
             {accountBalance}
           </div>
         </div>
         <div className="d-flex flex-column">
-          <button type='button' className='btn btn-success' onClick={getPrice} disabled={!metamaskAccount}>Price</button>
+          <button type='button' className='btn btn-success' disabled={!metamaskAccount}>Price</button>
           <div className="btn btn-secondary">
             {price}
           </div>
         </div>
         <div className="d-flex flex-column">
-          <button type='button' className='btn btn-success' onClick={getSold} disabled={!metamaskAccount}>Sold</button>
+          <button type='button' className='btn btn-success' disabled={!metamaskAccount}>Sold</button>
           <div className="btn btn-secondary">
             {soldCount}
           </div>
         </div>
         <div className="d-flex flex-column">
-          <button type='button' className='btn btn-success' onClick={getRemaining} disabled={!metamaskAccount}>Remaining</button>
+          <button type='button' className='btn btn-success' disabled={!metamaskAccount}>Remaining</button>
           <div className="btn btn-secondary">
             {remainingCount}
           </div>
         </div>
         <div className="d-flex flex-column">
-          <button type='button' className='btn btn-success' onClick={getContractBalance} disabled={!metamaskAccount}>Contract Balance</button>
+          <button type='button' className='btn btn-success' disabled={!metamaskAccount}>Contract Balance</button>
           <div className="btn btn-secondary">
             {contractBalance}
           </div>
         </div>
       </div>
       <div className="text-center mt-4 d-flex justify-content-center">
-        <button type='button' className='btn btn-dark w-50 py-2' onClick={setMint} disabled={!metamaskAccount}>
+        <button type='button' className='btn btn-dark w-50 py-2' disabled={!metamaskAccount} onClick={setMint}>
           Mint random
         </button>
       </div>
+      {loading && <Loader />}
     </div>
   )
 }
