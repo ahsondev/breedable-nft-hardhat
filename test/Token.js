@@ -1,14 +1,35 @@
 const { expect } = require('chai')
+const config = require('../config')
+const ERC721Config = require('../metadata/temp/ERC721Config.json')
+
+let owner, addr1, addr2, addr3
+let Token
+let hardhatToken
+
+beforeEach(async function () {
+  ;[owner, addr1, addr2, addr3] = await ethers.getSigners()
+  Token = await ethers.getContractFactory('StarNft')
+
+  hardhatToken = await Token.deploy(
+    'https://gateway.pinata.cloud/ipfs/' + ERC721Config.metadataHash,
+    ERC721Config.tokenAmount,
+    config.VRFContract.Kovan.VRFCoordinator,
+    config.VRFContract.Kovan.LINKToken,
+    config.VRFContract.Kovan.KeyHash
+  )
+})
 
 describe('Token contract', function () {
-  it('Deployment should assign the total supply of tokens to the owner', async function () {
-    const [owner] = await ethers.getSigners()
-
-    const Token = await ethers.getContractFactory('Token')
-
-    const hardhatToken = await Token.deploy()
-    // await hardhatToken.transfer(0xead9c93b79ae7c1591b1fb5323bd777e86e150d4, 10)
-    const ownerBalance = await hardhatToken.balanceOf(owner.address)
-    expect(await hardhatToken.totalSupply()).to.equal(ownerBalance)
+  it('StarNft token test', async function () {
+    const remainTokenCount = await hardhatToken.remainTokenCount()
+    expect(remainTokenCount).to.equal(ERC721Config.tokenAmount)
+  })
+  
+  it('Mint', async function() {
+    const prevBalance = await hardhatToken.balanceOf(owner.address);
+    console.log(prevBalance)
+    expect(1).to.equal(1)
+    // const remainTokenAmount = await hardhatToken.remainTokenCount()
+    // expect(remainTokenAmount).to.equal(tokenAmount - tokenBalance)
   })
 })

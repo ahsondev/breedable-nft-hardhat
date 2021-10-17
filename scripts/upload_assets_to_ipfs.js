@@ -31,8 +31,15 @@ const api = axios.create({
 const uploadAssets = () => new Promise((resolve, reject) => {
   assetCount = 0
   recursive.readdirr(assetsDir, (err, dirs, files) => {
+    console.log("uploadAssets: ", files)
     const data = new FormData()
     files.forEach((file) => {
+      const temp = file.split('.')
+      const extension = temp[temp.length - 1]
+      if (!['png', 'jpg', 'jpeg'].includes(extension)) {
+        return
+      }
+      
       assetCount += 1
       data.append(`file`, fs.createReadStream(file), {
         filepath: basePathConverter(assetsDir, file),
