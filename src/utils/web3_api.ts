@@ -1,6 +1,7 @@
 import Web3 from 'web3'
 import contractConfig from 'contracts/config.json'
 import StarNft from 'contracts/StarNft.json'
+import { createAlchemyWeb3 } from "@alch/alchemy-web3"
 
 const wnd = window as any
 
@@ -16,15 +17,21 @@ export const ethConnect = async () => {
     } catch (switchError: any) {}
 
     await wnd.ethereum.send('eth_requestAccounts')
-    web3 = new Web3(Web3.givenProvider)
+    web3 = createAlchemyWeb3('wss://eth-kovan.alchemyapi.io/v2/IROGTMfjIr-d3od_IUeYNDzpSVbMHQZY')
+    // web3 = new Web3('wss://eth-kovan.alchemyapi.io/v2/IROGTMfjIr-d3od_IUeYNDzpSVbMHQZY')
+    console.log("provider: ", wnd.ethereum.selectedAddress)
     connectToContract()
-    return web3
+    return {
+      web3,
+      contract
+    }
   }
   return null
 }
 
 export const connectToContract = () => {
   contract = new web3.eth.Contract(StarNft.abi, contractConfig.contractAddress)
+  return contract
 }
 
 export const getEthBalance = (addr: string) =>
@@ -87,22 +94,6 @@ export const getRemainTokenCount = () =>
       )
   })
 
-export const setMint = () =>
-  new Promise((resolve: (val: number) => void, reject: any) => {
-    if (!contract) {
-      reject('Contract is not defined')
-    }
-    contract.methods
-      .remainTokenCount()
-      .call()
-      .then(
-        (res: any) => {
-          resolve(res)
-        },
-        (err: any) => {}
-      )
-  })
-
 export const mintNFT = (
   addr: string,
   mintPricePerToken: number,
@@ -112,8 +103,17 @@ export const mintNFT = (
     if (!contract) {
       reject('Contract is not defined')
     }
-
+    
     const priceWei = web3.utils.toWei(mintPricePerToken * amount + '', 'ether') // Convert to wei value
+    // contract.methods.requestRandomNFT(addr, amount).send({
+    //   from: addr,
+    //   value: priceWei,
+    // }).then((res: any) => {
+    //   resolve(res)
+    // }, (err: any) => {
+    //   reject(err)
+    // })
+
     const tx = {
       from: addr,
       to: contractConfig.contractAddress,
@@ -125,6 +125,8 @@ export const mintNFT = (
 
     web3.eth.sendTransaction(tx).then((e: any) => {
       resolve(e)
+    }, (err: any) => {
+      reject(err)
     })
   })
 

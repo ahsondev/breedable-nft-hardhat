@@ -1,6 +1,7 @@
 import ReactDOM from 'react-dom'
 import App from './App'
 import reportWebVitals from './reportWebVitals'
+import 'react-notifications/lib/notifications.css'
 import './styles/app.scss'
 
 import { Provider } from 'react-redux'

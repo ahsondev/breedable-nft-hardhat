@@ -41,7 +41,7 @@ contract StarNft is ERC721Enumerable, VRFConsumerBase, Ownable {
     string public baseTokenURI;
 
     event PauseEvent(bool pause);
-    event welcomeToNFT(uint256 indexed id);
+    event MintedNewNFT(uint256 indexed tokenId, uint256 indexed remainCount);
 
     constructor(
         string memory baseURI,
@@ -120,7 +120,7 @@ contract StarNft is ERC721Enumerable, VRFConsumerBase, Ownable {
     function _mintAnElement(address _to, uint256 _tokenId) private {
         _safeMint(_to, _tokenId);
 
-        emit welcomeToNFT(_tokenId);
+        emit MintedNewNFT(_tokenId, remainTokenCount());
     }
 
     function price(uint256 _count) public pure returns (uint256) {

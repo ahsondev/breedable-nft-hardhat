@@ -1,5 +1,6 @@
 import { HashRouter as Router, Route, Redirect, Switch } from 'react-router-dom'
 import routes from './routes'
+import {NotificationContainer} from 'components/Notification'
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
           <Redirect to='/home' />
         </Switch>
       </Router>
+      <NotificationContainer/>
     </div>
   )
 }
