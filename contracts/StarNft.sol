@@ -13,35 +13,37 @@ contract StarNft is ERC721Enumerable, VRFConsumerBase, Ownable {
 
     uint256 public MAX_ELEMENTS = 10101;
     uint256 public constant PRICE = 0.001 ether;
-    uint256 public constant START_AT = 1;
-
-    address public constant creator1Address =
-        0x5DB342FB039C1c85bec5fE89Af6734621f421D84;
-    address public constant creator2Address =
-        0xc09eAC15f9Ba6462e8E4612af7C431E1cfe08b87;
+    
     address public constant devAddress =
         0xA5DBC34d69B745d5ee9494E6960a811613B9ae32;
 
-    //For VRF function
+    // For VRF function
     bytes32 internal keyHash;
     uint256 internal VRFFee = 0.1 * 10**18; // 0.1 LINK
     address public LinkToken;
     address public VRFCoordinator;
 
-    //Avaiable tokenIds
+    // Avaiable tokenIds
     uint256[] internal tokenIds;
 
-    //state variable for VRF
+    // state variable for VRF
     mapping(bytes32 => address) requestToSender;
-    
-    //whitelist
-    mapping(address => bool) whiteList;
+
+    // whitelist
+    // mapping(address => bool) whiteList;
+    mapping (address => bool) public whiteList;
+    uint private startTime;
+    uint public constant whiteListHours = 4;
+
+    // special Token #00000
+    bool private specialTokenMinted = false;
 
     bool private PAUSE = false;
     string public baseTokenURI;
 
     event PauseEvent(bool pause);
     event MintedNewNFT(uint256 indexed tokenId, uint256 indexed remainCount);
+    event MintedSpecialNFT();
 
     constructor(
         string memory baseURI,
@@ -55,12 +57,17 @@ contract StarNft is ERC721Enumerable, VRFConsumerBase, Ownable {
         VRFCoordinator = _VRFCoordinator;
         LinkToken = _LinkToken;
         keyHash = _keyhash;
+        startTime = block.timestamp;
+
+        // hard coded whiteList
+        addWhiteList(0xA5DBC34d69B745d5ee9494E6960a811613B9ae32);
     }
 
     modifier saleIsOpen() {
         require(remainTokenCount() >= 0, "Soldout!");
-        require(!PAUSE && !whiteList[msg.sender], "Sales not open");
+        require(!PAUSE, "Sales not open");
         _;
+       
     }
 
     function _baseURI() internal view virtual override returns (string memory) {
@@ -82,15 +89,25 @@ contract StarNft is ERC721Enumerable, VRFConsumerBase, Ownable {
         return tokenIds.length;
     }
 
-    function mintedTokenCount () public view returns(uint256) {
+    function mintedTokenCount() public view returns (uint256) {
         return MAX_ELEMENTS - remainTokenCount();
     }
 
     //Endpoint for mint nft
-    function requestRandomNFT(address _to, uint8 amount) public payable saleIsOpen {
+    function requestRandomNFT(address _to, uint8 amount)
+        public
+        payable
+        saleIsOpen
+    {
         uint256 total = mintedTokenCount();
-        require(amount <= 2, "Max limit");
-        require(total + amount <= MAX_ELEMENTS, "Max limit");
+        if (block.timestamp <= startTime + whiteListHours * 1 hours) {
+            require(isWhiteList(_to), "Address is not included in whiteList");
+        }
+        require(amount <= 1, "Max limit");
+        require(
+            total + amount + (specialTokenMinted ? 0 : 1) <= MAX_ELEMENTS,
+            "Max limit"
+        );
         require(msg.value >= price(amount), "Value below price");
         require(
             LINK.balanceOf(address(this)) >= VRFFee * amount,
@@ -106,8 +123,14 @@ contract StarNft is ERC721Enumerable, VRFConsumerBase, Ownable {
     /**
      * Callback function used by VRF Coordinator
      */
-    function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
-        uint256 index = randomness % tokenIds.length;
+    function fulfillRandomness(bytes32 requestId, uint256 randomness)
+        internal
+        override
+    {
+        uint256 availableCount = tokenIds.length - (specialTokenMinted ? 0 : 1);
+        require(availableCount > 0, "Sold out");
+
+        uint256 index = randomness % availableCount;
         address _to = requestToSender[requestId];
         mint(_to, tokenIds[index]);
     }
@@ -127,7 +150,11 @@ contract StarNft is ERC721Enumerable, VRFConsumerBase, Ownable {
         return PRICE.mul(_count);
     }
 
-    function walletOfOwner(address _owner) external view returns (uint256[] memory) {
+    function walletOfOwner(address _owner)
+        external
+        view
+        returns (uint256[] memory)
+    {
         uint256 tokenCount = balanceOf(_owner);
 
         uint256[] memory tokensId = new uint256[](tokenCount);
@@ -143,16 +170,14 @@ contract StarNft is ERC721Enumerable, VRFConsumerBase, Ownable {
         emit PauseEvent(PAUSE);
     }
 
-    function getPause() public view returns(bool) {
+    function getPause() public view returns (bool) {
         return PAUSE;
     }
 
     function withdrawAll() public onlyOwner {
         uint256 balance = address(this).balance;
         require(balance > 0);
-        // _widthdraw(devAddress, balance.mul(0).div(100));
-        _widthdraw(creator2Address, balance.mul(100).div(100));
-        // _widthdraw(creator1Address, address(this).balance);
+        _widthdraw(devAddress, balance.mul(100).div(100));
     }
 
     function _widthdraw(address _address, uint256 _amount) private {
@@ -160,7 +185,11 @@ contract StarNft is ERC721Enumerable, VRFConsumerBase, Ownable {
         require(success, "Transfer failed.");
     }
 
-    function getUnsoldTokens(uint256 offset, uint256 limit) external view returns (uint256[] memory) {
+    function getUnsoldTokens(uint256 offset, uint256 limit)
+        external
+        view
+        returns (uint256[] memory)
+    {
         uint256[] memory tokens = new uint256[](limit);
 
         for (uint256 i = 0; i < limit; i++) {
@@ -188,7 +217,11 @@ contract StarNft is ERC721Enumerable, VRFConsumerBase, Ownable {
         _initTokenIds();
     }
 
-    function _findTokenIdIndex(uint256 _tokenId) internal view returns (uint256) {
+    function _findTokenIdIndex(uint256 _tokenId)
+        internal
+        view
+        returns (uint256)
+    {
         for (uint256 i = 0; i < tokenIds.length; i++) {
             uint256 _id = tokenIds[i];
             if (_id == _tokenId) {
@@ -213,7 +246,7 @@ contract StarNft is ERC721Enumerable, VRFConsumerBase, Ownable {
         tokenIds.pop();
     }
 
-    //add whitelist
+    // add whitelist
     function addWhiteList(address _address) public onlyOwner {
         require(!whiteList[_address], "Already Added");
         whiteList[_address] = true;
@@ -223,9 +256,16 @@ contract StarNft is ERC721Enumerable, VRFConsumerBase, Ownable {
         return whiteList[_address];
     }
 
-    //remove whitelist
+    // remove whitelist
     function removeWhiteList(address _address) public onlyOwner {
         require(whiteList[_address], "Already removed");
         whiteList[_address] = false;
+    }
+
+    function mintSpecialToken(address _to) public onlyOwner {
+        require(!specialTokenMinted, "Already minted");
+        mint(_to, 0);
+        specialTokenMinted = true;
+        emit MintedSpecialNFT();
     }
 }
