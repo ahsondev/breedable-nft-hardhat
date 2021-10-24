@@ -1,63 +1,75 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./ERC721Enumerable.sol";
+// import "./ERC721Enumerable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 
-contract StarNft is ERC721Enumerable, VRFConsumerBase, Ownable {
+contract StarNft is ERC721, VRFConsumerBase, Ownable {
     using SafeMath for uint256;
 
-    uint256 public MAX_ELEMENTS = 10101;
+    // initial token count
+    uint256 public constant INITIAL_TOKEN_COUNT = 10101;
+
+    // initial token price
     uint256 public constant PRICE = 0.001 ether;
     
-    address public constant devAddress =
-        0xA5DBC34d69B745d5ee9494E6960a811613B9ae32;
+    // creator's addresses
+    address public constant DEV_ADDRESS = 0xA5DBC34d69B745d5ee9494E6960a811613B9ae32;
 
-    // For VRF function
-    bytes32 internal keyHash;
-    uint256 internal VRFFee = 0.1 * 10**18; // 0.1 LINK
-    address public LinkToken;
-    address public VRFCoordinator;
-
-    // Avaiable tokenIds
-    uint256[] internal tokenIds;
+    // for VRF function
+    bytes32 private _vrfKeyHash;
+    uint256 private _vrfFee = 0.1 * 10**18; // 0.1 LINK
+    address private _vrfLinkToken;
+    address private _vrfCoordinator;
 
     // state variable for VRF
     mapping(bytes32 => address) requestToSender;
 
+    // avaiable _okenIds, (start from 0)
+    uint256[] private _tokenIds;
+
     // whitelist
-    // mapping(address => bool) whiteList;
     mapping (address => bool) public whiteList;
-    uint private startTime;
-    uint public constant whiteListHours = 4;
+    uint private _startTime;
+    uint public constant WHITE_LIST_HOURS = 4;
 
     // special Token #00000
-    bool private specialTokenMinted = false;
+    bool private _specialTokenMinted = false;
 
-    bool private PAUSE = false;
-    string public baseTokenURI;
+    // if true, stops minting
+    bool private _bPaused = false;
 
+    // baseToken's URI
+    string private _baseTokenURI;
+
+    // Mapping from owner to list of owned token IDs
+    mapping(address => mapping(uint256 => uint256)) private _ownedTokens;
+
+    // events
     event PauseEvent(bool pause);
     event MintedNewNFT(uint256 indexed tokenId, uint256 indexed remainCount);
     event MintedSpecialNFT();
 
     constructor(
         string memory baseURI,
-        uint256 maxAmount,
-        address _VRFCoordinator,
-        address _LinkToken,
-        bytes32 _keyhash
-    ) ERC721("StarNft", "Star") VRFConsumerBase(_VRFCoordinator, _LinkToken) {
+        address vrfCoordinator,
+        address vrfLinkToken,
+        bytes32 vrfKeyhash
+    ) ERC721("StarNft", "Star") VRFConsumerBase(vrfCoordinator, vrfLinkToken) {
         setBaseURI(baseURI);
-        setMaxElementCount(maxAmount);
-        VRFCoordinator = _VRFCoordinator;
-        LinkToken = _LinkToken;
-        keyHash = _keyhash;
-        startTime = block.timestamp;
+        _vrfCoordinator = vrfCoordinator;
+        _vrfLinkToken = vrfLinkToken;
+        _vrfKeyHash = vrfKeyhash;
+
+        // mark start time for whitelist
+        _startTime = block.timestamp;
+
+        _initTokenIds();
 
         // hard coded whiteList
         addWhiteList(0xA5DBC34d69B745d5ee9494E6960a811613B9ae32);
@@ -65,57 +77,56 @@ contract StarNft is ERC721Enumerable, VRFConsumerBase, Ownable {
 
     modifier saleIsOpen() {
         require(remainTokenCount() >= 0, "Soldout!");
-        require(!PAUSE, "Sales not open");
+        require(!_bPaused, "Sales not open");
         _;
-       
-    }
-
-    function _baseURI() internal view virtual override returns (string memory) {
-        return baseTokenURI;
-    }
-
-    //init token ids
-    function _initTokenIds() internal {
-        for (uint256 i = 0; i < MAX_ELEMENTS; i += 1) {
-            tokenIds.push(i);
-        }
     }
 
     function setBaseURI(string memory baseURI) public onlyOwner {
-        baseTokenURI = baseURI;
+        _baseTokenURI = baseURI;
+    }
+
+    function _baseURI() internal view virtual override returns (string memory) {
+        return _baseTokenURI;
+    }
+
+    // init token ids
+    function _initTokenIds() internal {
+        for (uint256 i = 0; i < INITIAL_TOKEN_COUNT; i += 1) {
+            _tokenIds.push(i);
+        }
     }
 
     function remainTokenCount() public view returns (uint256) {
-        return tokenIds.length;
+        return _tokenIds.length;
     }
 
     function mintedTokenCount() public view returns (uint256) {
-        return MAX_ELEMENTS - remainTokenCount();
+        return INITIAL_TOKEN_COUNT - remainTokenCount();
     }
 
-    //Endpoint for mint nft
+    // endpoint for mint nft
     function requestRandomNFT(address _to, uint8 amount)
         public
         payable
         saleIsOpen
     {
         uint256 total = mintedTokenCount();
-        if (block.timestamp <= startTime + whiteListHours * 1 hours) {
+        if (block.timestamp <= _startTime + WHITE_LIST_HOURS * 1 hours) {
             require(isWhiteList(_to), "Address is not included in whiteList");
         }
         require(amount <= 1, "Max limit");
         require(
-            total + amount + (specialTokenMinted ? 0 : 1) <= MAX_ELEMENTS,
+            total + amount + (_specialTokenMinted ? 0 : 1) <= INITIAL_TOKEN_COUNT,
             "Max limit"
         );
-        require(msg.value >= price(amount), "Value below price");
+        require(msg.value >= mintMoney(amount), "Value below price");
         require(
-            LINK.balanceOf(address(this)) >= VRFFee * amount,
+            LINK.balanceOf(address(this)) >= _vrfFee * amount,
             "Not enough LINK - fill contract with faucet"
         );
 
         for (uint8 i = 0; i < amount; i += 1) {
-            bytes32 requestId = requestRandomness(keyHash, VRFFee);
+            bytes32 requestId = requestRandomness(_vrfKeyHash, _vrfFee);
             requestToSender[requestId] = _to;
         }
     }
@@ -127,15 +138,15 @@ contract StarNft is ERC721Enumerable, VRFConsumerBase, Ownable {
         internal
         override
     {
-        uint256 availableCount = tokenIds.length - (specialTokenMinted ? 0 : 1);
+        uint256 availableCount = _tokenIds.length - (_specialTokenMinted ? 0 : 1);
         require(availableCount > 0, "Sold out");
 
         uint256 index = randomness % availableCount;
         address _to = requestToSender[requestId];
-        mint(_to, tokenIds[index]);
+        _starmint(_to, _tokenIds[index]);
     }
 
-    function mint(address _to, uint256 _tokenId) private {
+    function _starmint(address _to, uint256 _tokenId) private {
         _mintAnElement(_to, _tokenId);
         _removeTokenId(_tokenId);
     }
@@ -146,38 +157,39 @@ contract StarNft is ERC721Enumerable, VRFConsumerBase, Ownable {
         emit MintedNewNFT(_tokenId, remainTokenCount());
     }
 
-    function price(uint256 _count) public pure returns (uint256) {
+    function mintMoney(uint256 _count) public pure returns (uint256) {
         return PRICE.mul(_count);
     }
 
-    function walletOfOwner(address _owner)
+    function walletOfOwner(address owner)
         external
         view
         returns (uint256[] memory)
     {
-        uint256 tokenCount = balanceOf(_owner);
-
+        uint256 tokenCount = balanceOf(owner);
         uint256[] memory tokensId = new uint256[](tokenCount);
+        uint256 iToken = 0;
         for (uint256 i = 0; i < tokenCount; i++) {
-            tokensId[i] = tokenOfOwnerByIndex(_owner, i);
+            if (ownerOf(i) == owner) {
+                tokensId[iToken++] = i;
+            }
         }
-
         return tokensId;
     }
 
-    function setPause(bool _pause) public onlyOwner {
-        PAUSE = _pause;
-        emit PauseEvent(PAUSE);
+    function setPause(bool pause) public onlyOwner {
+        _bPaused = pause;
+        emit PauseEvent(_bPaused);
     }
 
     function getPause() public view returns (bool) {
-        return PAUSE;
+        return _bPaused;
     }
 
     function withdrawAll() public onlyOwner {
         uint256 balance = address(this).balance;
         require(balance > 0);
-        _widthdraw(devAddress, balance.mul(100).div(100));
+        _widthdraw(DEV_ADDRESS, balance.mul(100).div(100));
     }
 
     function _widthdraw(address _address, uint256 _amount) private {
@@ -194,7 +206,7 @@ contract StarNft is ERC721Enumerable, VRFConsumerBase, Ownable {
 
         for (uint256 i = 0; i < limit; i++) {
             uint256 key = i + offset;
-            if (rawOwnerOf(key) == address(0)) {
+            if (ownerOf(key) == address(0)) {
                 tokens[i] = key;
             }
         }
@@ -202,70 +214,62 @@ contract StarNft is ERC721Enumerable, VRFConsumerBase, Ownable {
         return tokens;
     }
 
-    function mintUnsoldTokens(uint256[] memory _tokensId) public onlyOwner {
-        require(PAUSE, "Pause is disable");
+    function mintTokens(uint256[] memory tokensId) public onlyOwner {
+        require(_bPaused, "Pause is disable");
 
-        for (uint256 i = 0; i < _tokensId.length; i++) {
-            if (rawOwnerOf(_tokensId[i]) == address(0)) {
-                _mintAnElement(owner(), _tokensId[i]);
+        for (uint256 i = 0; i < tokensId.length; i++) {
+            if (ownerOf(tokensId[i]) == address(0)) {
+                _mintAnElement(owner(), tokensId[i]);
             }
         }
     }
 
-    function setMaxElementCount(uint256 _maxElements) public onlyOwner {
-        MAX_ELEMENTS = _maxElements;
-        _initTokenIds();
-    }
-
-    function _findTokenIdIndex(uint256 _tokenId)
+    function _findTokenIdIndex(uint256 tokenId)
         internal
         view
         returns (uint256)
     {
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            uint256 _id = tokenIds[i];
-            if (_id == _tokenId) {
+        for (uint256 i = 0; i < _tokenIds.length; i++) {
+            if (tokenId == _tokenIds[i]) {
                 return i;
             }
         }
-        return tokenIds.length + 100;
+        return _tokenIds.length + 100;
     }
 
-    //remove minted token id
+    // remove minted token id
     function _removeTokenId(uint256 _tokenId) internal {
-        require(tokenIds.length > 0, "tokenIds is empty");
+        require(_tokenIds.length > 0, "_tokenIds is empty");
         //get index for _tokenId
         uint256 index = _findTokenIdIndex(_tokenId);
         require(
-            index <= tokenIds.length,
-            "Cannot find tokenIds Index - removeTokenId"
+            index <= _tokenIds.length,
+            "Cannot find _tokenIds Index - removeTokenId"
         );
-        // Move the last element into the place to delete
-        tokenIds[index] = tokenIds[tokenIds.length - 1];
-        // Remove the last element
-        tokenIds.pop();
+        _tokenIds[index] = _tokenIds[_tokenIds.length - 1];
+        _tokenIds.pop();
     }
 
     // add whitelist
-    function addWhiteList(address _address) public onlyOwner {
-        require(!whiteList[_address], "Already Added");
-        whiteList[_address] = true;
+    function addWhiteList(address addr) public onlyOwner {
+        require(!whiteList[addr], "Already Added");
+        whiteList[addr] = true;
     }
 
-    function isWhiteList(address _address) public view onlyOwner returns(bool) {
-        return whiteList[_address];
+    function isWhiteList(address addr) public view onlyOwner returns(bool) {
+        return whiteList[addr];
     }
 
     // remove whitelist
-    function removeWhiteList(address _address) public onlyOwner {
-        require(whiteList[_address], "Already removed");
-        whiteList[_address] = false;
+    function removeWhiteList(address addr) public onlyOwner {
+        require(whiteList[addr], "Already removed");
+        whiteList[addr] = false;
     }
 
-    function mintSpecialToken(address _to) public onlyOwner {
-        require(!specialTokenMinted, "Already minted");
-        mint(_to, 0);
-        specialTokenMinted = true;
+    function mintSpecialToken(address to) public onlyOwner {
+        require(!_specialTokenMinted, "Already minted");
+        _starmint(to, 0);
+        _specialTokenMinted = true;
         emit MintedSpecialNFT();
     }
 }
