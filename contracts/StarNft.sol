@@ -4,11 +4,13 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "./Mintable.sol";
 
 contract StarNft is ERC721, VRFConsumerBase, Ownable, Mintable {
     using SafeMath for uint256;
+    using Strings for uint256;
 
     // initial token count
     uint256 public constant INITIAL_TOKEN_COUNT = 10101;
@@ -28,7 +30,7 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, Mintable {
     // state variable for VRF
     mapping(bytes32 => address) requestToSender;
 
-    // avaiable _okenIds, (start from 0)
+    // avaiable _tokenIds, (start from 0), this is initial token ids which doesn't contain breeded tokens
     uint256[] private _tokenIds;
 
     // whitelist
@@ -45,8 +47,9 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, Mintable {
     // baseToken's URI
     string private _baseTokenURI;
 
-    // Mapping from owner to list of owned token IDs
-    mapping(address => mapping(uint256 => uint256)) private _ownedTokens;
+    // breed tokens
+    mapping(uint256 => string) private _breedTokenUris;
+    uint256 private _breedTokenCount;
 
     // events
     event PauseEvent(bool pause);
@@ -274,10 +277,28 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, Mintable {
         whiteList[addr] = false;
     }
 
+    // mint first token
     function mintSpecialToken(address to) public onlyOwner {
         require(!_specialTokenMinted, "Already minted");
         _starmint(to, 0);
         _specialTokenMinted = true;
         emit MintedSpecialNFT();
+    }
+
+    function mintBreedToken(address to_, string memory tokenUri_) public onlyOwner {
+        _safeMint(to_, _breedTokenCount + INITIAL_TOKEN_COUNT);
+        _breedTokenUris[_breedTokenCount + INITIAL_TOKEN_COUNT] = tokenUri_;
+        _breedTokenCount += 1;
+    }
+
+    // breed token's tokenURI
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+
+        if (tokenId < INITIAL_TOKEN_COUNT) {
+            return ERC721.tokenURI(tokenId);
+        } else {
+            return _breedTokenUris[tokenId];
+        }
     }
 }
