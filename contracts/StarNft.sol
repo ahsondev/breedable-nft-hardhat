@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// import "./ERC721Enumerable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
+import "./Mintable.sol";
 
-contract StarNft is ERC721, VRFConsumerBase, Ownable {
+contract StarNft is ERC721, VRFConsumerBase, Ownable, Mintable {
     using SafeMath for uint256;
 
     // initial token count
@@ -59,8 +57,10 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable {
         string memory baseURI,
         address vrfCoordinator,
         address vrfLinkToken,
-        bytes32 vrfKeyhash
-    ) ERC721("StarNft", "Star") VRFConsumerBase(vrfCoordinator, vrfLinkToken) {
+        bytes32 vrfKeyhash,
+        address argOwner,
+        address argImx
+    ) ERC721("StarNft", "Star") Mintable(argOwner, argImx) VRFConsumerBase(vrfCoordinator, vrfLinkToken) {
         setBaseURI(baseURI);
         _vrfCoordinator = vrfCoordinator;
         _vrfLinkToken = vrfLinkToken;
@@ -155,6 +155,14 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable {
         _safeMint(_to, _tokenId);
 
         emit MintedNewNFT(_tokenId, remainTokenCount());
+    }
+
+    function _mintFor(
+        address to,
+        uint256 id,
+        bytes memory
+    ) internal override {
+        requestRandomNFT(to, 1)
     }
 
     function mintMoney(uint256 _count) public pure returns (uint256) {

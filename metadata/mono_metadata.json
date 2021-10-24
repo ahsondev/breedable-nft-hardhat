@@ -8,6 +8,13 @@
   },
   "metadata": [
     {
+      "id": "0",
+      "name": "General",
+      "icon": "",
+      "description": "Old general",
+      "image": ""
+    },
+    {
       "id": "1",
       "name": "Gun Guy",
       "icon": "",
@@ -68,13 +75,6 @@
       "name": "Asian youth",
       "icon": "",
       "description": "Asian youth with sword",
-      "image": ""
-    },
-    {
-      "id": "10",
-      "name": "General",
-      "icon": "",
-      "description": "Old general",
       "image": ""
     }
   ]
