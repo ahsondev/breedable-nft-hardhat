@@ -162,7 +162,7 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, Mintable {
         uint256 id,
         bytes memory
     ) internal override {
-        requestRandomNFT(to, 1)
+        requestRandomNFT(to, 1);
     }
 
     function mintMoney(uint256 _count) public pure returns (uint256) {
