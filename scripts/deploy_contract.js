@@ -41,7 +41,7 @@ async function main() {
   const StarNft = await ethers.getContractFactory('StarNft')
   const token = await StarNft.deploy(
     baseMetadataUri,
-    tokenAmount,
+    // tokenAmount,
     VRFCoordinator,
     LinkToken,
     keyhash

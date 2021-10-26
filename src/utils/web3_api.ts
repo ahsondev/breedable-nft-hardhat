@@ -114,12 +114,13 @@ export const mintNFT = (
     //   reject(err)
     // })
 
+    // real gas = gas * maxPriorityFeePerGas / 10^18
     const tx = {
       from: addr,
       to: contractConfig.contractAddress,
-      gas: 500000,
+      gas: 500000, // 500 000 gas
       value: priceWei,
-      maxPriorityFeePerGas: 1999999987,
+      maxPriorityFeePerGas: 1999999987, // 199...987 wei
       data: contract.methods.requestRandomNFT(addr, amount).encodeABI(),
     }
 
@@ -214,4 +215,65 @@ export const removeWhiteList = (address: string, _address: string) =>
       tx,
       process.env.REACT_APP_ACCOUNT_PRIVATE_KEY
     )
+  })
+
+
+export const test_getUnsoldTokens = () =>
+  new Promise((resolve: (val: number) => void, reject: any) => {
+    if (!contract) {
+      reject('Contract is not defined')
+    }
+    contract.methods
+      .getUnsoldTokens()
+      .call()
+      .then(
+        (res: any) => {
+          resolve(res)
+        },
+        (err: any) => {}
+      )
+  })
+
+export const test_getUnsoldTokens1 = () =>
+  new Promise((resolve: any, reject: any) => {
+    if (!contract) {
+      reject('Contract is not defined')
+    }
+    contract.methods.getUnsoldTokens1().send({
+      from: wnd.ethereum.selectedAddress
+    }).then((res: any) => {
+      resolve(res)
+    }, (err: any) => {
+      reject(err)
+    })
+  })
+
+export const test_remainTokenCount = () =>
+  new Promise((resolve: (val: number) => void, reject: any) => {
+    if (!contract) {
+      reject('Contract is not defined')
+    }
+    contract.methods
+      .remainTokenCount()
+      .call()
+      .then(
+        (res: any) => {
+          resolve(res)
+        },
+        (err: any) => {}
+      )
+  })
+
+export const test_remainTokenCount1 = () =>
+  new Promise((resolve: any, reject: any) => {
+    if (!contract) {
+      reject('Contract is not defined')
+    }
+    contract.methods.remainTokenCount1().send({
+      from: wnd.ethereum.selectedAddress
+    }).then((res: any) => {
+      resolve(res)
+    }, (err: any) => {
+      reject(err)
+    })
   })

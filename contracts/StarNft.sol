@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "./Mintable.sol";
 
-contract StarNft is ERC721, VRFConsumerBase, Ownable, Mintable {
+contract StarNft is ERC721, VRFConsumerBase, Ownable {
     using SafeMath for uint256;
     using Strings for uint256;
 
@@ -31,7 +31,7 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, Mintable {
     mapping(bytes32 => address) requestToSender;
 
     // avaiable _tokenIds, (start from 0), this is initial token ids which doesn't contain breeded tokens
-    uint256[] private _tokenIds;
+    uint256[] private _tokenIds = new uint256[](INITIAL_TOKEN_COUNT);
 
     // whitelist
     mapping (address => bool) public whiteList;
@@ -55,15 +55,15 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, Mintable {
     event PauseEvent(bool pause);
     event MintedNewNFT(uint256 indexed tokenId, uint256 indexed remainCount);
     event MintedSpecialNFT();
-
+//  Mintable(argOwner, argImx)
     constructor(
         string memory baseURI,
         address vrfCoordinator,
         address vrfLinkToken,
-        bytes32 vrfKeyhash,
-        address argOwner,
-        address argImx
-    ) ERC721("StarNft", "Star") Mintable(argOwner, argImx) VRFConsumerBase(vrfCoordinator, vrfLinkToken) {
+        bytes32 vrfKeyhash//,
+        // address argOwner,
+        // address argImx
+    ) ERC721("StarNft", "Star") VRFConsumerBase(vrfCoordinator, vrfLinkToken) {
         setBaseURI(baseURI);
         _vrfCoordinator = vrfCoordinator;
         _vrfLinkToken = vrfLinkToken;
@@ -95,7 +95,7 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, Mintable {
     // init token ids
     function _initTokenIds() internal {
         for (uint256 i = 0; i < INITIAL_TOKEN_COUNT; i += 1) {
-            _tokenIds.push(i);
+            _tokenIds[i] = i;
         }
     }
 
@@ -160,13 +160,13 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, Mintable {
         emit MintedNewNFT(_tokenId, remainTokenCount());
     }
 
-    function _mintFor(
-        address to,
-        uint256 id,
-        bytes memory
-    ) internal override {
-        requestRandomNFT(to, 1);
-    }
+    // function _mintFor(
+    //     address to,
+    //     uint256 id,
+    //     bytes memory
+    // ) internal override {
+    //     requestRandomNFT(to, 1);
+    // }
 
     function mintMoney(uint256 _count) public pure returns (uint256) {
         return PRICE.mul(_count);

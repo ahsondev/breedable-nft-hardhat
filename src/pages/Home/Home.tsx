@@ -6,6 +6,10 @@ import {
   getRemainTokenCount,
   getMintedTokenCount,
   mintNFT,
+  test_getUnsoldTokens,
+  test_getUnsoldTokens1,
+  test_remainTokenCount,
+  test_remainTokenCount1
 } from 'utils/web3_api'
 import contractConfig from 'contracts/config.json'
 import Loader from 'components/Loader'
@@ -86,6 +90,62 @@ const Home = (props: Props) => {
   const setMint = () => {
     setLoading(true)
     mintNFT(metamaskAccount, price)
+      .then(
+        (res) => {
+          console.log(res)
+        },
+        (err) => {
+          console.log(err)
+        }
+      )
+      .finally(() => setLoading(false))
+  }
+
+  const onRemain = () => {
+    setLoading(true)
+    test_remainTokenCount()
+      .then(
+        (res) => {
+          console.log(res)
+        },
+        (err) => {
+          console.log(err)
+        }
+      )
+      .finally(() => setLoading(false))
+  }
+
+  const onRemain1 = () => {
+    setLoading(true)
+    test_remainTokenCount1()
+      .then(
+        (res) => {
+          console.log(res)
+        },
+        (err) => {
+          console.log(err)
+        }
+      )
+      .finally(() => setLoading(false))
+  }
+
+  const onUnsold = () => {
+    setLoading(true)
+    test_getUnsoldTokens()
+      .then(
+        (res) => {
+          console.log(res)
+        },
+        (err) => {
+          console.log(err)
+        }
+      )
+      .finally(() => setLoading(false))
+  }
+
+  const onUnsold1 = () => {
+    setLoading(true)
+    test_getUnsoldTokens1()
       .then(
         (res) => {
           console.log(res)
@@ -202,6 +262,40 @@ const Home = (props: Props) => {
           Mint random
         </button>
       </div>
+
+      <button
+        type='button'
+        className='btn btn-dark'
+        disabled={!metamaskAccount}
+        onClick={onRemain}
+      >
+        remainCount
+      </button>
+      <button
+        type='button'
+        className='btn btn-dark'
+        disabled={!metamaskAccount}
+        onClick={onRemain1}
+      >
+        remainCount1
+      </button>
+      <button
+        type='button'
+        className='btn btn-dark'
+        disabled={!metamaskAccount}
+        onClick={onUnsold}
+      >
+        unsold
+      </button>
+      <button
+        type='button'
+        className='btn btn-dark'
+        disabled={!metamaskAccount}
+        onClick={onUnsold1}
+      >
+        unsold1
+      </button>
+
       {loading && <Loader />}
     </div>
   )
