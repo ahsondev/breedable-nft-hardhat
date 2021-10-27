@@ -48,6 +48,7 @@
     "contract:compile": "npx hardhat compile",
     "deploy:metadata": "node ./scripts/upload_assets_to_ipfs.js",
     "deploy:kovan": "yarn contract:clean && npx hardhat run scripts/deploy_contract.js --network kovan",
+    "deploy:rinkeby": "yarn contract:clean && npx hardhat run scripts/deploy_contract.js --network rinkeby",
     "dev:client": "react-scripts start",
     "dev:server": "nodemon ./server/index.js",
     "start": "node ./server/index.js",
