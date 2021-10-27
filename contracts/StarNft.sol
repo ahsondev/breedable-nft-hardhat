@@ -21,7 +21,9 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
     uint256 public constant BREED_PRICE = 0.001 ether;
     
     // creator's addresses
-    address public constant DEV_ADDRESS = 0xA5DBC34d69B745d5ee9494E6960a811613B9ae32;
+    address public constant ART_ADDRESS1 = 0x396823F49AA9f0e3FAC4b939Bc27aD5cD88264Db;
+    address public constant ART_ADDRESS2 = 0x892E10CB1299C16e469cf0f79f18CCa639D00F5B;
+    address public constant TEST_ADDRESS = 0xA5DBC34d69B745d5ee9494E6960a811613B9ae32;
 
     // for VRF function
     bytes32 private _vrfKeyHash;
@@ -156,7 +158,9 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
     function withdrawAll() external {
         uint256 balance = address(this).balance;
         require(balance > 0);
-        _widthdraw(DEV_ADDRESS, balance.mul(100).div(100));
+        _widthdraw(ART_ADDRESS1, balance.mul(5).div(100));
+        _widthdraw(ART_ADDRESS2, balance.mul(5).div(100));
+        _widthdraw(TEST_ADDRESS, balance.mul(90).div(100));
     }
 
     function _widthdraw(address _address, uint256 _amount) private {
