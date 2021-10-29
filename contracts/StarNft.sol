@@ -21,8 +21,8 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
     uint256 public constant BREED_PRICE = 0.001 ether;
     
     // creator's addresses
-    address public constant ART_ADDRESS1 = 0x396823F49AA9f0e3FAC4b939Bc27aD5cD88264Db;
-    address public constant ART_ADDRESS2 = 0x892E10CB1299C16e469cf0f79f18CCa639D00F5B;
+    address public constant ABC_ADDRESS = 0x396823F49AA9f0e3FAC4b939Bc27aD5cD88264Db;
+    address public constant XYZ_ADDRESS = 0x892E10CB1299C16e469cf0f79f18CCa639D00F5B;
     address public constant TEST_ADDRESS = 0xA5DBC34d69B745d5ee9494E6960a811613B9ae32;
 
     // for VRF function
@@ -51,6 +51,8 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
     mapping(uint256 => string) private _breedTokenUris;
     uint256 private _breedTokenCount;
 
+    address public testOwner;
+
     // events
     event PauseEvent(bool pause);
     event MintedNewNFT(uint256 indexed tokenId, uint256 indexed remainCount);
@@ -71,7 +73,15 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
 
         // mark start time for whitelist
         _startTime = block.timestamp;
+        
+        address[] memory addrs = new address[](3);
+        addrs[0] = ABC_ADDRESS;
+        addrs[1] = XYZ_ADDRESS;
+        addrs[2] = TEST_ADDRESS;
 
+        addWhiteLists(addrs);
+
+        testOwner = msg.sender;
         // should mint #000000
     }
 
@@ -122,6 +132,7 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
 
     /** * Callback function used by VRF Coordinator */
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
+        mintedInitialTokenCount += 1;
         _mintAnElement(requestToSender[requestId], _mintHero(randomness));
     }
 
@@ -158,8 +169,8 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
     function withdrawAll() external {
         uint256 balance = address(this).balance;
         require(balance > 0);
-        _widthdraw(ART_ADDRESS1, balance.mul(5).div(100));
-        _widthdraw(ART_ADDRESS2, balance.mul(5).div(100));
+        _widthdraw(ABC_ADDRESS, balance.mul(5).div(100));
+        _widthdraw(XYZ_ADDRESS, balance.mul(5).div(100));
         _widthdraw(TEST_ADDRESS, balance.mul(90).div(100));
     }
 
@@ -186,7 +197,7 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
         }
     }
 
-    function isWhiteList(address addr) public view onlyOwner returns(bool) {
+    function isWhiteList(address addr) public view returns(bool) {
         return whiteList[addr];
     }
 
@@ -197,6 +208,7 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
     }
 
     function mintBreedToken(address to_, string memory tokenUri_) public payable {
+        require(msg.value >= BREED_PRICE.mul(1), "Value below price");
         _safeMint(to_, _mintHero(2));
         _breedTokenUris[_breedTokenCount + INITIAL_TOKEN_COUNT] = tokenUri_;
         _breedTokenCount += 1;

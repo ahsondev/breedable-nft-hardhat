@@ -27,11 +27,15 @@ contract HeroFactory {
         uint256 fatherId;
         uint256 motherId;
         uint256[] childrenIds;
+
+        // // last child
+        // uint256[] lastChildId;
+        // // prev brother Id
+        // uint256 prevBrotherFatherId;
+        // uint256 prevBrotherMotherId;
     }
 
     Hero[] internal _heros;
-
-    uint256 MAX_INT = 2**256 - 1;
 
     constructor() {}
 
@@ -42,30 +46,38 @@ contract HeroFactory {
 
     function _breedHero(uint256 heroId1_, uint256 heroId2_) internal returns (uint256) {
         require(_heros[heroId1_].gender != _heros[heroId2_].gender, "Same gender");
+        Hero storage hero1;
+        Hero storage hero2;
+        if (hero1.gender == 0) {
+            hero1 = _heros[heroId1_];
+            hero2 = _heros[heroId2_];
+        } else {
+            hero1 = _heros[heroId2_];
+            hero2 = _heros[heroId1_];
+        }
 
-        // set father and mother
-        Hero storage hero1 = _heros[heroId1_].gender == 0 ? _heros[heroId1_] :  _heros[heroId2_];
-        Hero storage hero2 = _heros[heroId1_].gender == 0 ? _heros[heroId2_] :  _heros[heroId1_];
-
-        // create a child
         uint256 seed = (hero1.psychologicalTrait + 1) * (hero1.datingTrait + 1)
             + (hero2.psychologicalTrait + 1) * (hero2.datingTrait + 1)
             + (hero1.psychologicalTrait + 1) * (hero2.datingTrait + 1);
         Hero memory hero = _createHero(uint(keccak256(abi.encodePacked(seed))));
         uint256 newId = _heros.length;
 
-        // set parent
+
         hero.fatherId = heroId1_;
         hero.motherId = heroId2_;
+        // hero.prevBrotherFatherId = hero1.lastChildId;
+        // hero.prevBrotherMotherId = hero2.lastChildId;
+        // hero1.lastChildId = newId;
+        // hero2.lastChildId = newId;
         _heros.push(hero);
 
-        // add child id
         hero1.childrenIds.push(newId);
         hero2.childrenIds.push(newId);
         return _heros.length - 1;
     }
 
-    function _createHero(uint256 dna) internal view returns (Hero memory) {
+    function _createHero(uint256 dna) internal pure returns (Hero memory) {
+        uint rand = uint(keccak256(abi.encodePacked(_str)));
         return Hero(
             (uint8)(dna % 32),
             (uint8)((uint(keccak256(abi.encodePacked(dna.toString())))) % 8),
@@ -83,9 +95,11 @@ contract HeroFactory {
             0,
             0,
             0,
-            MAX_INT,
-            MAX_INT,
-            new uint256[](0)
+            uint256(-1),
+            uint256(-1),
+            uint256(-1),
+            uint256(-1),
+            uint256(-1)
         );
     }
 
@@ -99,7 +113,7 @@ contract HeroFactory {
 
         Hero[] memory parent;
         Hero storage hero = _heros[index];
-        if (hero.fatherId == MAX_INT) {
+        if (hero.fatherId == uint256(-1)) {
             return parent;
         } else {
             parent = new Hero[](2);
@@ -109,54 +123,33 @@ contract HeroFactory {
         }
     }
 
-    function getChildren(uint256 index) external view returns (Hero[] memory) {
-        require(index >= 0 && index < _heros.length, "index out of range");
+    // function getChildrenIds(uint256 index) public view returns (uint256[] memory) {
+    //     require(index >= 0 && index < _heros.length, "index out of range");
 
-        Hero storage hero = _heros[index];
-        Hero[] memory children = new Hero[](hero.childrenIds.length);
-        for (uint i = 0; i < hero.childrenIds.length; i += 1) {
-            children[i] = _heros[hero.childrenIds[i]];
-        }
-        return children;
-    }
-
-    function getChildrenIdsWithParent(uint256 heroId1_, uint256 heroId2_) public view returns (uint256[] memory) {
-        require(_heros[heroId1_].gender != _heros[heroId2_].gender, "Same gender");
-
-        Hero storage hero1 = _heros[heroId1_];
-        uint256 count = 0;
-        uint256[] memory ret = new uint256[](hero1.childrenIds.length);
-        count = 0;
-        for (uint i = 0; i < hero1.childrenIds.length; i += 1) {
-            if (findIndex(_heros[heroId2_].childrenIds, hero1.childrenIds[i]) >= _heros[heroId2_].childrenIds.length) {
-                ret[count++] = hero1.childrenIds[i];
-            }
-        }
-
-        uint256[] memory ret1 = new uint256[](count);
-        count = 0;
-        for (uint i = 0; i < ret.length; i += 1) {
-            ret1[i] = ret[i];
-        }
-
-        return ret1;
-    }
-
-    function getChildrenWithParent(uint256 heroId1_, uint256 heroId2_) external view returns (Hero[] memory) {
-        uint256[] memory ids = getChildrenIdsWithParent(heroId1_, heroId2_);
-        Hero[] memory ret = new Hero[](ids.length);
-        for (uint i = 0; i < ids.length; i += 1) {
-            ret[i] = _heros[ids[i]];
-        }
-        return ret;
-    }
-
-    function findIndex(uint256[] memory array, uint256 val) public pure returns (uint256) {
-        for (uint i = 0; i < array.length; i += 1) {
-            if (array[i] == val) {
-                return i;
-            }
-        }
-        return array.length;
-    }
+    //     Hero storage hero = _heros[index];
+    //     uint256[] storage ids;
+    //     if (hero.lastChildId == uint256(-1)) {
+    //         return ids;
+    //     }
+    //     ids.push(hero.lastChildId);
+    //     if (hero.gender == 0)
+    //     {
+    //         // we should follow brothers that have same father
+    //         while (hero.prevBrotherFatherId != uint256(-1)) {
+    //             ids.push(hero.prevBrotherFatherId);
+    //             hero = _heros[hero.prevBrotherFatherId];
+    //         }
+    //     } else {
+    //         // we should follow brothers that have same mother
+    //         while (hero.prevBrotherMotherId != uint256(-1)) {
+    //             ids.push(hero.prevBrotherMotherId);
+    //             hero = _heros[hero.prevBrotherMotherId];
+    //         }
+    //     }
+    //     Hero[] memory ret = new Hero[](ids.length);
+    //     for (uint i = ids.length - 1; i >= 0; i -= 1) {
+    //         ret[ids.length -1 - i] = ids[i];
+    //     }
+    //     return ret;
+    // }
 }

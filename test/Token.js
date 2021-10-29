@@ -7,7 +7,7 @@ let Token
 let hardhatToken
 
 beforeEach(async function () {
-  ;[owner, addr1, addr2, addr3] = await ethers.getSigners()
+  [owner, addr1, addr2, addr3] = await ethers.getSigners()
   Token = await ethers.getContractFactory('StarNft')
 
   hardhatToken = await Token.deploy(
@@ -17,12 +17,17 @@ beforeEach(async function () {
     config.VRFContract.Kovan.LINKToken,
     config.VRFContract.Kovan.KeyHash
   )
+
+  let ret = await hardhatToken.addWhiteLists([owner.address, addr1.address, addr2.address, addr3.address])
 })
 
 describe('Token contract', function () {
   it('StarNft token test', async function () {
     const remainTokenCount = await hardhatToken.remainTokenCount()
     console.log("remainTokenCount: ", remainTokenCount)
+    // const token = await hardhatToken.requestRandomNFT(owner.address, 1)
+    const ret = await hardhatToken.isWhiteList(addr1.address)
+    console.log(ret)
     // expect(remainTokenCount).to.equal(ERC721Config.tokenAmount)
   })
   
