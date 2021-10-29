@@ -207,9 +207,9 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
         whiteList[addr] = false;
     }
 
-    function mintBreedToken(address to_, string memory tokenUri_) public payable {
+    function mintBreedToken(address to_, string memory tokenUri_, uint256 heroId1_, uint256 heroId2_) public payable {
         require(msg.value >= BREED_PRICE.mul(1), "Value below price");
-        _safeMint(to_, _mintHero(2));
+        _safeMint(to_, _breedHero(heroId1_, heroId2_));
         _breedTokenUris[_breedTokenCount + INITIAL_TOKEN_COUNT] = tokenUri_;
         _breedTokenCount += 1;
     }
