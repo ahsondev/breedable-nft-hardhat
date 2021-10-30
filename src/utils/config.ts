@@ -1,12 +1,38 @@
-import env from 'dotenv-flow'
+let env = {}
 
+if (process.env.NODE_ENV === 'development') {
+  env = {
+    network: 'rinkeby',
+    apiUrl: '127.0.0.1:4000'
+  }
+} else {
+  env = {
+    network: 'mainnet',
+    apiUrl: ''
+  }
+}
 
 const config = {
-  ...env.config().parsed,
-  rpcUrl: 'https://ropsten.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+  ...env,
   appID: 'NFT',
-  apiUrl: 'https://api.example.com',
-}
+  networks: {
+    mainnet: {
+      chainId: '0x1',
+      alchemyHttpUrl: process.env.REACT_APP_ALCHEMY_RINKEBY_HTTP_URL,
+      alchemyWssUrl: process.env.REACT_APP_ALCHEMY_RINKEBY_WSS_URL
+    },
+    rinkeby: {
+      chainId: '0x4',
+      alchemyHttpUrl: process.env.REACT_APP_ALCHEMY_RINKEBY_HTTP_URL,
+      alchemyWssUrl: process.env.REACT_APP_ALCHEMY_RINKEBY_WSS_URL
+    },
+    kovan: {
+      chainId: '0x2A',
+      alchemyHttpUrl: process.env.REACT_APP_ALCHEMY_KOVAN_HTTP_URL,
+      alchemyWssUrl: process.env.REACT_APP_ALCHEMY_KOVAN_WSS_URL
+    }
+  },
+} as any
 
 export const actionTypes = {
   SAMPLE_ACTION: 'SAMPLE_ACTION'

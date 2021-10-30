@@ -2,22 +2,24 @@ import Web3 from 'web3'
 import contractConfig from 'contracts/config.json'
 import StarNft from 'contracts/StarNft.json'
 import { createAlchemyWeb3 } from "@alch/alchemy-web3"
+import config from './config'
 
 const wnd = window as any
 
 let web3: any, contract: any
+
 
 export const ethConnect = async () => {
   if (wnd.ethereum) {
     try {
       await wnd.ethereum.request({
         method: 'wallet_switchEthereumChain',
-        params: [{ chainId: '0x2A' }],
+        params: [{ chainId: config.networks[config.network].chainId }],
       })
     } catch (switchError: any) {}
 
     await wnd.ethereum.send('eth_requestAccounts')
-    web3 = createAlchemyWeb3('wss://eth-kovan.alchemyapi.io/v2/IROGTMfjIr-d3od_IUeYNDzpSVbMHQZY')
+    web3 = createAlchemyWeb3(config.networks[config.network].alchemyWssUrl)
     // web3 = new Web3('wss://eth-kovan.alchemyapi.io/v2/IROGTMfjIr-d3od_IUeYNDzpSVbMHQZY')
     console.log("provider: ", wnd.ethereum.selectedAddress)
     connectToContract()
@@ -52,7 +54,7 @@ export const getPrice = () =>
     }
 
     contract.methods
-      .PRICE()
+      .MINT_PRICE()
       .call()
       .then(
         (res: any) => {
@@ -105,6 +107,7 @@ export const mintNFT = (
     }
     
     const priceWei = web3.utils.toWei(mintPricePerToken * amount + '', 'ether') // Convert to wei value
+    console.log("mintPricePerToken: ", mintPricePerToken, priceWei)
     // contract.methods.requestRandomNFT(addr, amount).send({
     //   from: addr,
     //   value: priceWei,
@@ -118,9 +121,9 @@ export const mintNFT = (
     const tx = {
       from: addr,
       to: contractConfig.contractAddress,
-      gas: 500000, // 500 000 gas
+      // gas: 50000, // 500 000 gas
       value: priceWei,
-      maxPriorityFeePerGas: 1999999987, // 199...987 wei
+      // maxPriorityFeePerGas: 1999999987, // 199...987 wei
       data: contract.methods.requestRandomNFT(addr, amount).encodeABI(),
     }
 
@@ -217,63 +220,25 @@ export const removeWhiteList = (address: string, _address: string) =>
     )
   })
 
-
-export const test_getUnsoldTokens = () =>
-  new Promise((resolve: (val: number) => void, reject: any) => {
+export const isWhiteList = (address: string) =>
+  new Promise((resolve, reject) => {
     if (!contract) {
       reject('Contract is not defined')
     }
+
     contract.methods
-      .getUnsoldTokens()
+      .isWhiteList1()
       .call()
       .then(
         (res: any) => {
+          console.log("whitelist: ", res)
           resolve(res)
         },
-        (err: any) => {}
+        (err: any) => {
+          reject(err)
+        }
       )
-  })
-
-export const test_getUnsoldTokens1 = () =>
-  new Promise((resolve: any, reject: any) => {
-    if (!contract) {
-      reject('Contract is not defined')
-    }
-    contract.methods.getUnsoldTokens1().send({
-      from: wnd.ethereum.selectedAddress
-    }).then((res: any) => {
-      resolve(res)
-    }, (err: any) => {
-      reject(err)
-    })
-  })
-
-export const test_remainTokenCount = () =>
-  new Promise((resolve: (val: number) => void, reject: any) => {
-    if (!contract) {
-      reject('Contract is not defined')
-    }
-    contract.methods
-      .remainTokenCount()
-      .call()
-      .then(
-        (res: any) => {
-          resolve(res)
-        },
-        (err: any) => {}
-      )
-  })
-
-export const test_remainTokenCount1 = () =>
-  new Promise((resolve: any, reject: any) => {
-    if (!contract) {
-      reject('Contract is not defined')
-    }
-    contract.methods.remainTokenCount1().send({
-      from: wnd.ethereum.selectedAddress
-    }).then((res: any) => {
-      resolve(res)
-    }, (err: any) => {
-      reject(err)
-    })
+      .catch((err: any) => {
+        console.log(err)
+      })
   })

@@ -6,10 +6,6 @@ import {
   getRemainTokenCount,
   getMintedTokenCount,
   mintNFT,
-  test_getUnsoldTokens,
-  test_getUnsoldTokens1,
-  test_remainTokenCount,
-  test_remainTokenCount1
 } from 'utils/web3_api'
 import contractConfig from 'contracts/config.json'
 import Loader from 'components/Loader'
@@ -30,21 +26,6 @@ const Home = (props: Props) => {
   const [loading, setLoading] = useState(false)
   const [contract, setContract] = useState<any>(null)
 
-  useEffect(() => {
-    // NotificationManager.success('Success message', 'Title here')
-    if (contract) {
-      contract.events.MintedNewNFT({}, (error: any, event: any) => {
-        console.log('event: ', error, event)
-        if (error) {
-          return
-        }
-        
-        const msg = `Token ${event.returnValues} minted. ${event.remainCount} token${event.remainCount <= 1 ? '' : 's'} are available`
-        NotificationManager.info(msg, 'Minted new NFT')
-      })
-    }
-  }, [contract])
-
   const connectMetamask = async (e: any) => {
     const connectRes = await ethConnect()
     if (connectRes) {
@@ -52,7 +33,6 @@ const Home = (props: Props) => {
       setContract(connectRes.contract)
       const account = wnd.ethereum.selectedAddress
       setMetamaskAccount(account)
-
 
       getEthBalance(account).then(
         (res) => {
@@ -101,63 +81,24 @@ const Home = (props: Props) => {
       .finally(() => setLoading(false))
   }
 
-  const onRemain = () => {
-    setLoading(true)
-    test_remainTokenCount()
-      .then(
-        (res) => {
-          console.log(res)
-        },
-        (err) => {
-          console.log(err)
-        }
-      )
-      .finally(() => setLoading(false))
-  }
+  useEffect(() => {
+    connectMetamask(null)
+  }, [])
 
-  const onRemain1 = () => {
-    setLoading(true)
-    test_remainTokenCount1()
-      .then(
-        (res) => {
-          console.log(res)
-        },
-        (err) => {
-          console.log(err)
+  useEffect(() => {
+    // NotificationManager.success('Success message', 'Title here')
+    if (contract) {
+      contract.events.MintedNewNFT({}, (error: any, event: any) => {
+        console.log('event: ', error, event)
+        if (error) {
+          return
         }
-      )
-      .finally(() => setLoading(false))
-  }
-
-  const onUnsold = () => {
-    setLoading(true)
-    test_getUnsoldTokens()
-      .then(
-        (res) => {
-          console.log(res)
-        },
-        (err) => {
-          console.log(err)
-        }
-      )
-      .finally(() => setLoading(false))
-  }
-
-  const onUnsold1 = () => {
-    setLoading(true)
-    test_getUnsoldTokens1()
-      .then(
-        (res) => {
-          console.log(res)
-        },
-        (err) => {
-          console.log(err)
-        }
-      )
-      .finally(() => setLoading(false))
-  }
-
-  const sendLink = () => {}
+        
+        const msg = `Token ${event.returnValues} minted. ${event.remainCount} token${event.remainCount <= 1 ? '' : 's'} are available`
+        NotificationManager.info(msg, 'Minted new NFT')
+      })
+    }
+  }, [contract])
 
   return (
     <div className='home-page'>
@@ -247,14 +188,6 @@ const Home = (props: Props) => {
       <div className='text-center mt-4 d-flex justify-content-center row'>
         <button
           type='button'
-          className='btn btn-dark col-3 py-2 mr-4'
-          disabled={!metamaskAccount}
-          onClick={sendLink}
-        >
-          Send LINK
-        </button>
-        <button
-          type='button'
           className='btn btn-dark col-3 py-2'
           disabled={!metamaskAccount}
           onClick={setMint}
@@ -262,39 +195,6 @@ const Home = (props: Props) => {
           Mint random
         </button>
       </div>
-
-      <button
-        type='button'
-        className='btn btn-dark'
-        disabled={!metamaskAccount}
-        onClick={onRemain}
-      >
-        remainCount
-      </button>
-      <button
-        type='button'
-        className='btn btn-dark'
-        disabled={!metamaskAccount}
-        onClick={onRemain1}
-      >
-        remainCount1
-      </button>
-      <button
-        type='button'
-        className='btn btn-dark'
-        disabled={!metamaskAccount}
-        onClick={onUnsold}
-      >
-        unsold
-      </button>
-      <button
-        type='button'
-        className='btn btn-dark'
-        disabled={!metamaskAccount}
-        onClick={onUnsold1}
-      >
-        unsold1
-      </button>
 
       {loading && <Loader />}
     </div>

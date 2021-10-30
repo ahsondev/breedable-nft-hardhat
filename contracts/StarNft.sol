@@ -7,8 +7,9 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "./Mintable.sol";
+import "./HeroFactory.sol";
 
-contract StarNft is ERC721, VRFConsumerBase, Ownable {
+contract StarNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
     using SafeMath for uint256;
     using Strings for uint256;
 
@@ -16,40 +17,41 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable {
     uint256 public constant INITIAL_TOKEN_COUNT = 10101;
 
     // initial token price
-    uint256 public constant PRICE = 0.001 ether;
+    uint256 public constant MINT_PRICE = 0.001 ether;
+    uint256 public constant BREED_PRICE = 0.001 ether;
     
     // creator's addresses
-    address public constant DEV_ADDRESS = 0xA5DBC34d69B745d5ee9494E6960a811613B9ae32;
+    address public constant ABC_ADDRESS = 0x396823F49AA9f0e3FAC4b939Bc27aD5cD88264Db;
+    address public constant XYZ_ADDRESS = 0x892E10CB1299C16e469cf0f79f18CCa639D00F5B;
+    address public constant TEST_ADDRESS = 0xA5DBC34d69B745d5ee9494E6960a811613B9ae32;
 
     // for VRF function
     bytes32 private _vrfKeyHash;
     uint256 private _vrfFee = 0.1 * 10**18; // 0.1 LINK
     address private _vrfLinkToken;
     address private _vrfCoordinator;
-
-    // state variable for VRF
-    mapping(bytes32 => address) requestToSender;
-
-    // avaiable _tokenIds, (start from 0), this is initial token ids which doesn't contain breeded tokens
-    uint256[] private _tokenIds = new uint256[](INITIAL_TOKEN_COUNT);
+    mapping(bytes32 => address) requestToSender; // state variable for VRF
 
     // whitelist
     mapping (address => bool) public whiteList;
     uint private _startTime;
-    uint public constant WHITE_LIST_HOURS = 4;
 
     // special Token #00000
     bool private _specialTokenMinted = false;
 
     // if true, stops minting
-    bool private _bPaused = false;
+    bool private bPaused = false;
 
     // baseToken's URI
     string private _baseTokenURI;
 
+    uint256 public mintedInitialTokenCount = 0;
+
     // breed tokens
     mapping(uint256 => string) private _breedTokenUris;
     uint256 private _breedTokenCount;
+
+    address public testOwner;
 
     // events
     event PauseEvent(bool pause);
@@ -71,16 +73,21 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable {
 
         // mark start time for whitelist
         _startTime = block.timestamp;
+        
+        address[] memory addrs = new address[](3);
+        addrs[0] = ABC_ADDRESS;
+        addrs[1] = XYZ_ADDRESS;
+        addrs[2] = TEST_ADDRESS;
 
-        _initTokenIds();
+        addWhiteLists(addrs);
 
-        // hard coded whiteList
-        addWhiteList(0xA5DBC34d69B745d5ee9494E6960a811613B9ae32);
+        testOwner = msg.sender;
+        // should mint #000000
     }
 
     modifier saleIsOpen() {
         require(remainTokenCount() >= 0, "Soldout!");
-        require(!_bPaused, "Sales not open");
+        require(!bPaused, "Sales not open");
         _;
     }
 
@@ -92,37 +99,26 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable {
         return _baseTokenURI;
     }
 
-    // init token ids
-    function _initTokenIds() internal {
-        for (uint256 i = 0; i < INITIAL_TOKEN_COUNT; i += 1) {
-            _tokenIds[i] = i;
-        }
-    }
-
     function remainTokenCount() public view returns (uint256) {
-        return _tokenIds.length;
+        return INITIAL_TOKEN_COUNT - mintedInitialTokenCount;
     }
 
-    function mintedTokenCount() public view returns (uint256) {
-        return INITIAL_TOKEN_COUNT - remainTokenCount();
+    function mintedTokenCount() public view returns (uint256)
+    {
+        return _heros.length;
     }
 
     // endpoint for mint nft
-    function requestRandomNFT(address _to, uint8 amount)
-        public
-        payable
-        saleIsOpen
-    {
-        uint256 total = mintedTokenCount();
-        if (block.timestamp <= _startTime + WHITE_LIST_HOURS * 1 hours) {
+    function requestRandomNFT(address _to, uint8 amount) public payable saleIsOpen {
+        if (block.timestamp <= _startTime + 4 hours) {
             require(isWhiteList(_to), "Address is not included in whiteList");
         }
         require(amount <= 1, "Max limit");
         require(
-            total + amount + (_specialTokenMinted ? 0 : 1) <= INITIAL_TOKEN_COUNT,
+            mintedInitialTokenCount + amount + (_specialTokenMinted ? 0 : 1) <= INITIAL_TOKEN_COUNT,
             "Max limit"
         );
-        require(msg.value >= mintMoney(amount), "Value below price");
+        require(msg.value >= MINT_PRICE.mul(amount), "Value below price");
         require(
             LINK.balanceOf(address(this)) >= _vrfFee * amount,
             "Not enough LINK - fill contract with faucet"
@@ -134,29 +130,14 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable {
         }
     }
 
-    /**
-     * Callback function used by VRF Coordinator
-     */
-    function fulfillRandomness(bytes32 requestId, uint256 randomness)
-        internal
-        override
-    {
-        uint256 availableCount = _tokenIds.length - (_specialTokenMinted ? 0 : 1);
-        require(availableCount > 0, "Sold out");
-
-        uint256 index = randomness % availableCount;
-        address _to = requestToSender[requestId];
-        _starmint(_to, _tokenIds[index]);
-    }
-
-    function _starmint(address _to, uint256 _tokenId) private {
-        _mintAnElement(_to, _tokenId);
-        _removeTokenId(_tokenId);
+    /** * Callback function used by VRF Coordinator */
+    function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
+        mintedInitialTokenCount += 1;
+        _mintAnElement(requestToSender[requestId], _mintHero(randomness));
     }
 
     function _mintAnElement(address _to, uint256 _tokenId) private {
         _safeMint(_to, _tokenId);
-
         emit MintedNewNFT(_tokenId, remainTokenCount());
     }
 
@@ -168,19 +149,11 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable {
     //     requestRandomNFT(to, 1);
     // }
 
-    function mintMoney(uint256 _count) public pure returns (uint256) {
-        return PRICE.mul(_count);
-    }
-
-    function walletOfOwner(address owner)
-        external
-        view
-        returns (uint256[] memory)
-    {
+    function walletOfOwner(address owner) external view returns (uint256[] memory) {
         uint256 tokenCount = balanceOf(owner);
         uint256[] memory tokensId = new uint256[](tokenCount);
         uint256 iToken = 0;
-        for (uint256 i = 0; i < tokenCount; i++) {
+        for (uint256 i = 0; i < _heros.length; i++) {
             if (ownerOf(i) == owner) {
                 tokensId[iToken++] = i;
             }
@@ -189,18 +162,16 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable {
     }
 
     function setPause(bool pause) public onlyOwner {
-        _bPaused = pause;
-        emit PauseEvent(_bPaused);
+        bPaused = pause;
+        emit PauseEvent(bPaused);
     }
 
-    function getPause() public view returns (bool) {
-        return _bPaused;
-    }
-
-    function withdrawAll() public onlyOwner {
+    function withdrawAll() external {
         uint256 balance = address(this).balance;
         require(balance > 0);
-        _widthdraw(DEV_ADDRESS, balance.mul(100).div(100));
+        _widthdraw(ABC_ADDRESS, balance.mul(5).div(100));
+        _widthdraw(XYZ_ADDRESS, balance.mul(5).div(100));
+        _widthdraw(TEST_ADDRESS, balance.mul(90).div(100));
     }
 
     function _widthdraw(address _address, uint256 _amount) private {
@@ -208,66 +179,25 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable {
         require(success, "Transfer failed.");
     }
 
-    function getUnsoldTokens(uint256 offset, uint256 limit)
-        external
-        view
-        returns (uint256[] memory)
-    {
-        uint256[] memory tokens = new uint256[](limit);
+    function mintUnsoldTokens() public onlyOwner {
+        require(bPaused, "Pause is disable");
 
-        for (uint256 i = 0; i < limit; i++) {
-            uint256 key = i + offset;
-            if (ownerOf(key) == address(0)) {
-                tokens[i] = key;
-            }
+        for (uint256 i = mintedInitialTokenCount; i < INITIAL_TOKEN_COUNT; i++) {
+            uint256 rand = uint256(keccak256(abi.encodePacked(i.toString())));
+            _mintAnElement(owner(), _mintHero(rand));
         }
 
-        return tokens;
-    }
-
-    function mintTokens(uint256[] memory tokensId) public onlyOwner {
-        require(_bPaused, "Pause is disable");
-
-        for (uint256 i = 0; i < tokensId.length; i++) {
-            if (ownerOf(tokensId[i]) == address(0)) {
-                _mintAnElement(owner(), tokensId[i]);
-            }
-        }
-    }
-
-    function _findTokenIdIndex(uint256 tokenId)
-        internal
-        view
-        returns (uint256)
-    {
-        for (uint256 i = 0; i < _tokenIds.length; i++) {
-            if (tokenId == _tokenIds[i]) {
-                return i;
-            }
-        }
-        return _tokenIds.length + 100;
-    }
-
-    // remove minted token id
-    function _removeTokenId(uint256 _tokenId) internal {
-        require(_tokenIds.length > 0, "_tokenIds is empty");
-        //get index for _tokenId
-        uint256 index = _findTokenIdIndex(_tokenId);
-        require(
-            index <= _tokenIds.length,
-            "Cannot find _tokenIds Index - removeTokenId"
-        );
-        _tokenIds[index] = _tokenIds[_tokenIds.length - 1];
-        _tokenIds.pop();
+        mintedInitialTokenCount = INITIAL_TOKEN_COUNT;
     }
 
     // add whitelist
-    function addWhiteList(address addr) public onlyOwner {
-        require(!whiteList[addr], "Already Added");
-        whiteList[addr] = true;
+    function addWhiteLists(address[] memory addrs) public onlyOwner {
+        for (uint i = 0; i < addrs.length; i += 1) {
+            whiteList[addrs[i]] = true;
+        }
     }
 
-    function isWhiteList(address addr) public view onlyOwner returns(bool) {
+    function isWhiteList(address addr) public view returns(bool) {
         return whiteList[addr];
     }
 
@@ -277,16 +207,9 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable {
         whiteList[addr] = false;
     }
 
-    // mint first token
-    function mintSpecialToken(address to) public onlyOwner {
-        require(!_specialTokenMinted, "Already minted");
-        _starmint(to, 0);
-        _specialTokenMinted = true;
-        emit MintedSpecialNFT();
-    }
-
-    function mintBreedToken(address to_, string memory tokenUri_) public onlyOwner {
-        _safeMint(to_, _breedTokenCount + INITIAL_TOKEN_COUNT);
+    function mintBreedToken(address to_, string memory tokenUri_, uint256 heroId1_, uint256 heroId2_) public payable {
+        require(msg.value >= BREED_PRICE.mul(1), "Value below price");
+        _safeMint(to_, _breedHero(heroId1_, heroId2_));
         _breedTokenUris[_breedTokenCount + INITIAL_TOKEN_COUNT] = tokenUri_;
         _breedTokenCount += 1;
     }

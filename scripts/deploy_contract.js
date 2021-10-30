@@ -9,7 +9,8 @@ async function main() {
 
   const ERC721Config = require('../metadata/temp/ERC721Config.json')
   const contractconfig = require('../metadata/temp/contracturi.json')
-  const baseMetadataUri = ERC721Config.gatewayUrl + '/' + ERC721Config.metadataHash + '/'
+  // const baseMetadataUri = ERC721Config.gatewayUrl + '/' + ERC721Config.metadataHash + '/'
+  const baseMetadataUri = 'htpps://example.metadata.com/'
   const contractUri = ERC721Config.gatewayUrl + '/' + ERC721Config.contractUriHash
   const contractName = contractconfig.name
   const contractSymbol = contractconfig.symbol
@@ -22,6 +23,13 @@ async function main() {
       VRFCoordinator = config.VRFContract.Kovan.VRFCoordinator
       LinkToken = config.VRFContract.Kovan.LINKToken
       keyhash = config.VRFContract.Kovan.KeyHash
+      break
+    }
+
+    case 'rinkeby': {
+      VRFCoordinator = config.VRFContract.Rinkeby.VRFCoordinator
+      LinkToken = config.VRFContract.Rinkeby.LINKToken
+      keyhash = config.VRFContract.Rinkeby.KeyHash
       break
     }
 
