@@ -146,7 +146,7 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
     //     uint256 id,
     //     bytes memory
     // ) internal override {
-    //     requestRandomNFT(to, 1);
+    //     _safeMint(to, id);
     // }
 
     function walletOfOwner(address owner) external view returns (uint256[] memory) {

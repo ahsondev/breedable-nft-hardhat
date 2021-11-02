@@ -32,7 +32,7 @@ export const ethConnect = async () => {
 }
 
 export const connectToContract = () => {
-  contract = new web3.eth.Contract(StarNft.abi, contractConfig.contractAddress)
+  contract = new web3.eth.Contract(StarNft, contractConfig.contractAddress)
   return contract
 }
 

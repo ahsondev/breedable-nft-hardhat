@@ -36,7 +36,7 @@ contract HeroFactory {
     constructor() {}
 
     function _mintHero(uint256 dna) internal returns (uint256) {
-        _heros.push(_createHero(dna));
+        _heros.push(_createHero(dna), (_heros.length + 1) % 2);
         return _heros.length - 1;
     }
 
@@ -51,7 +51,7 @@ contract HeroFactory {
         uint256 seed = (hero1.psychologicalTrait + 1) * (hero1.datingTrait + 1)
             + (hero2.psychologicalTrait + 1) * (hero2.datingTrait + 1)
             + (hero1.psychologicalTrait + 1) * (hero2.datingTrait + 1);
-        Hero memory hero = _createHero(uint(keccak256(abi.encodePacked(seed))));
+        Hero memory hero = _createHero(_random(seed), 2);
         uint256 newId = _heros.length;
 
         // set parent
@@ -65,21 +65,25 @@ contract HeroFactory {
         return _heros.length - 1;
     }
 
-    function _createHero(uint256 dna) internal view returns (Hero memory) {
+    function _random(uint256 seed) internal pure returns (uint256) {
+        return uint(keccak256(abi.encodePacked((seed * 9 / 11).toString())));
+    }
+
+    function _createHero(uint256 dna, uint8 gender) internal view returns (Hero memory) {
         return Hero(
             (uint8)(dna % 32),
-            (uint8)((uint(keccak256(abi.encodePacked(dna.toString())))) % 8),
-            (uint8)((uint(keccak256(abi.encodePacked((dna + 1).toString())))) % 10),
-            (uint8)((uint(keccak256(abi.encodePacked((dna + 2).toString())))) % 10),
-            (uint8)((uint(keccak256(abi.encodePacked((dna + 3).toString())))) % 10),
-            (uint8)((uint(keccak256(abi.encodePacked((dna + 4).toString())))) % 10),
-            (uint8)((uint(keccak256(abi.encodePacked((dna + 5).toString())))) % 10),
-            (uint8)((uint(keccak256(abi.encodePacked((dna + 6).toString())))) % 10),
-            (uint8)((uint(keccak256(abi.encodePacked((dna + 7).toString())))) % 10),
-            (uint8)((uint(keccak256(abi.encodePacked((dna + 8).toString())))) % 10),
-            (uint8)((uint(keccak256(abi.encodePacked((dna + 9).toString())))) % 10),
-            (uint8)((uint(keccak256(abi.encodePacked((dna + 10).toString())))) % 10),
-            (uint8)((uint(keccak256(abi.encodePacked((dna + 11).toString())))) % 2),
+            (uint8)( % 8),
+            (uint8)(_random(dna + 1) % 10),
+            (uint8)(_random(dna + 2) % 10),
+            (uint8)(_random(dna + 3) % 10),
+            (uint8)(_random(dna + 4) % 10),
+            (uint8)(_random(dna + 5) % 10),
+            (uint8)(_random(dna + 6) % 10),
+            (uint8)(_random(dna + 7) % 10),
+            (uint8)(_random(dna + 8) % 10),
+            (uint8)(_random(dna + 9) % 10),
+            (uint8)(_random(dna + 10) % 10),
+            gender == 2 ? (uint8)(_random(dna + 11) % 2) : gender,
             0,
             0,
             0,

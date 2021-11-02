@@ -56,18 +56,19 @@ select {
 
 /* width */
 ::-webkit-scrollbar {
-  width: 3px;
-  height: 3px;
+  width: 6px;
+  height: 6px;
 }
 
 /* Track */
 ::-webkit-scrollbar-track {
-  background: #0000;
+  background: #0005;
 }
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
   background: #7a7a7a;
+  border-radius: 6px;
 }
 
 /* Handle on hover */
