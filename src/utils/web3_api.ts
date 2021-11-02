@@ -1,6 +1,6 @@
 import Web3 from 'web3'
 import contractConfig from 'contracts/config.json'
-import StarNft from 'contracts/StarNft.json'
+import BrainDanceNft from 'contracts/BrainDanceNft.json'
 import { createAlchemyWeb3 } from "@alch/alchemy-web3"
 import config from './config'
 
@@ -32,7 +32,7 @@ export const ethConnect = async () => {
 }
 
 export const connectToContract = () => {
-  contract = new web3.eth.Contract(StarNft, contractConfig.contractAddress)
+  contract = new web3.eth.Contract(BrainDanceNft, contractConfig.contractAddress)
   return contract
 }
 

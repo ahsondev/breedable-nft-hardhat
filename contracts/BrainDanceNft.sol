@@ -9,7 +9,7 @@ import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "./Mintable.sol";
 import "./HeroFactory.sol";
 
-contract StarNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
+contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
     using SafeMath for uint256;
     using Strings for uint256;
 
@@ -65,7 +65,7 @@ contract StarNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
         bytes32 vrfKeyhash//,
         // address argOwner,
         // address argImx
-    ) ERC721("StarNft", "Star") VRFConsumerBase(vrfCoordinator, vrfLinkToken) {
+    ) ERC721("BrainDanceNft", "BrainDance") VRFConsumerBase(vrfCoordinator, vrfLinkToken) {
         setBaseURI(baseURI);
         _vrfCoordinator = vrfCoordinator;
         _vrfLinkToken = vrfLinkToken;

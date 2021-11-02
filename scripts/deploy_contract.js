@@ -46,8 +46,8 @@ async function main() {
   console.log('tokenAmount: ', tokenAmount)
   console.log('------')
 
-  const StarNft = await ethers.getContractFactory('StarNft')
-  const token = await StarNft.deploy(
+  const BrainDanceNft = await ethers.getContractFactory('BrainDanceNft')
+  const token = await BrainDanceNft.deploy(
     baseMetadataUri,
     // tokenAmount,
     VRFCoordinator,
@@ -63,8 +63,8 @@ async function main() {
   }
   fs.writeFileSync('./src/contracts/config.json', JSON.stringify(deployData, null, 2))
 
-  const contractJson = require('../artifacts/contracts/StarNft.sol/StarNft.json')
-  fs.writeFileSync('./src/contracts/StarNft.json', JSON.stringify(contractJson, null, 2))
+  const contractJson = require('../artifacts/contracts/BrainDanceNft.sol/BrainDanceNft.json')
+  fs.writeFileSync('./src/contracts/BrainDanceNft.json', JSON.stringify(contractJson.abi, null, 2))
 
   console.log('Token address:', token.address)
 }
