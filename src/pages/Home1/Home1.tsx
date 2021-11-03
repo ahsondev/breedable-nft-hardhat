@@ -10,6 +10,11 @@ import {
 import contractConfig from 'contracts/config.json'
 import Loader from 'components/Loader'
 import { NotificationManager } from 'components/Notification'
+import {
+  GoogleReCaptchaProvider,
+  GoogleReCaptcha
+} from 'react-google-recaptcha-v3';
+import MintButton from 'components/MintButton'
 
 const wnd = window as any
 
@@ -82,7 +87,7 @@ const Home1 = (props: Props) => {
   }
 
   useEffect(() => {
-    connectMetamask(null)
+    // connectMetamask(null)
   }, [])
 
   useEffect(() => {
@@ -99,6 +104,9 @@ const Home1 = (props: Props) => {
       })
     }
   }, [contract])
+
+  const onChangeReCAPTCHA = () => {}
+  const handleVerify = () => {}
 
   return (
     <div className='home-page'>
@@ -197,6 +205,10 @@ const Home1 = (props: Props) => {
       </div>
 
       {loading && <Loader />}
+
+      <GoogleReCaptchaProvider reCaptchaKey="6Lf3JqwZAAAAAM7EVYnGEw3QtmXEI8gWxjr3rdGZ">
+        <MintButton />
+      </GoogleReCaptchaProvider>
     </div>
   )
 }
