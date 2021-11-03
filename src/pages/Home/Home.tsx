@@ -1,194 +1,214 @@
-import React from 'react'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import * as THREE from 'three'
-import { useEffect } from 'react'
-import './Home.scoped.scss'
+import { useEffect, useState } from 'react'
+import {
+  ethConnect,
+  getEthBalance,
+  getPrice,
+  getRemainTokenCount,
+  getMintedTokenCount,
+  mintNFT,
+} from 'utils/web3_api'
+import contractConfig from 'contracts/config.json'
+import Loader from 'components/Loader'
+import { NotificationManager } from 'components/Notification'
+import {
+  GoogleReCaptchaProvider,
+  GoogleReCaptcha
+} from 'react-google-recaptcha-v3';
+import MintButton from 'components/MintButton'
 
-const Home = () => {
-  let glb: any = null
+const wnd = window as any
 
-  const onScroll = () => {
-    const scrollY = window.scrollY // Don't get confused by what's scrolling - It's not the window
-    if (glb) {
-      glb.rotation.y = scrollY * 0.005
+interface Props {}
+
+const Home = (props: Props) => {
+  const [metamaskAccount, setMetamaskAccount] = useState('')
+  const [price, setPrice] = useState(0)
+  const [soldCount, setSoldCount] = useState(0)
+  const [remainingCount, setRemainingCount] = useState(0)
+  const [contractBalance, setContractBalance] = useState(0)
+  const [web3, setWeb3] = useState<any>(null)
+  const [accountBalance, setAccountBalance] = useState(0)
+  const [loading, setLoading] = useState(false)
+  const [contract, setContract] = useState<any>(null)
+
+  const connectMetamask = async (e: any) => {
+    const connectRes = await ethConnect()
+    if (connectRes) {
+      setWeb3(connectRes.web3)
+      setContract(connectRes.contract)
+      const account = wnd.ethereum.selectedAddress
+      setMetamaskAccount(account)
+
+      getEthBalance(account).then(
+        (res) => {
+          setAccountBalance(res)
+        },
+        (err) => {}
+      )
+      getPrice().then(
+        (res) => {
+          setPrice(res)
+        },
+        (err) => {}
+      )
+      getRemainTokenCount().then(
+        (res) => {
+          setRemainingCount(res)
+        },
+        (err) => {}
+      )
+      getMintedTokenCount().then(
+        (res) => {
+          setSoldCount(res)
+        },
+        (err) => {}
+      )
+      getEthBalance(contractConfig.contractAddress).then(
+        (res) => {
+          setContractBalance(res)
+        },
+        (err) => {}
+      )
     }
-    // console.log(glb)
+  }
+
+  const setMint = () => {
+    setLoading(true)
+    mintNFT(metamaskAccount, price)
+      .then(
+        (res) => {
+          console.log(res)
+        },
+        (err) => {
+          console.log(err)
+        }
+      )
+      .finally(() => setLoading(false))
   }
 
   useEffect(() => {
-    window.addEventListener('scroll', onScroll)
-
-    const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    )
-
-    const renderer = new THREE.WebGLRenderer({
-      canvas: document.querySelector('#bg') as HTMLCanvasElement,
-    })
-
-    var loader = new GLTFLoader()
-    renderer.setPixelRatio(window.devicePixelRatio)
-    renderer.setSize(window.innerWidth, window.innerHeight)
-
-    camera.position.setZ(40)
-    camera.position.setX(-3)
-
-    // Lights
-    const pointLight = new THREE.PointLight(0xdddddd)
-    pointLight.position.set(5, 5, 5)
-
-    const ambientLight = new THREE.AmbientLight(0xdddddd)
-    scene.add(pointLight, ambientLight)
-
-    // Background
-    const spaceTexture = new THREE.TextureLoader().load('./assets/images/space.jpg')
-    scene.background = spaceTexture
-
-    loader.load(
-      './assets/objects/brain.fbx.glb',
-      function (item: any) {
-        scene.add(item.scene)
-        glb = item.scene
-        glb.position.z = 38
-        glb.position.x = -3
-        glb.position.setY(0)
-        glb.rotation.x = 0.4
-      },
-      function onProgress(e: any) {},
-      function onError(e: any) {
-        console.log(e)
-      }
-    )
-
-    var animate = function () {
-      requestAnimationFrame(animate)
-      renderer.render(scene, camera)
-    }
-
-    animate()
+    // connectMetamask(null)
   }, [])
-  
+
+  useEffect(() => {
+    // NotificationManager.success('Success message', 'Title here')
+    if (contract) {
+      contract.events.MintedNewNFT({}, (error: any, event: any) => {
+        console.log('event: ', error, event)
+        if (error) {
+          return
+        }
+        
+        const msg = `Token ${event.returnValues} minted. ${event.remainCount} token${event.remainCount <= 1 ? '' : 's'} are available`
+        NotificationManager.info(msg, 'Minted new NFT')
+      })
+    }
+  }, [contract])
+
+  const onChangeReCAPTCHA = () => {}
+  const handleVerify = () => {}
+
   return (
-    <div className='home'>
-      <canvas id='bg'></canvas>
+    <div className='home-page'>
+      <h1 className='text-center'>NFT Minting Demo</h1>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '20px',
+          padding: '0 40px',
+        }}
+      >
+        <div className='d-flex flex-column'>
+          <button
+            type='button'
+            className='d-block btn btn-primary'
+            onClick={connectMetamask}
+          >
+            Connect Metamask
+          </button>
+          <div className='btn btn-secondary'>
+            {!web3 && (
+              <>
+                Please install{' '}
+                <a
+                  href='https://chrome.google.com/webstore/detail/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn?hl=en'
+                  target='_blank'
+                >
+                  Metamask
+                </a>
+              </>
+            )}
+            {web3 && <>Account: {metamaskAccount}</>}
+          </div>
+        </div>
+        <div className='d-flex flex-column'>
+          <button
+            type='button'
+            className='btn btn-success'
+            disabled={!metamaskAccount}
+          >
+            Account balance
+          </button>
+          <div className='btn btn-secondary'>{accountBalance}</div>
+        </div>
+        <div className='d-flex flex-column'>
+          <button
+            type='button'
+            className='btn btn-success'
+            disabled={!metamaskAccount}
+          >
+            Price
+          </button>
+          <div className='btn btn-secondary'>{price}</div>
+        </div>
+        <div className='d-flex flex-column'>
+          <button
+            type='button'
+            className='btn btn-success'
+            disabled={!metamaskAccount}
+          >
+            Sold
+          </button>
+          <div className='btn btn-secondary'>{soldCount}</div>
+        </div>
+        <div className='d-flex flex-column'>
+          <button
+            type='button'
+            className='btn btn-success'
+            disabled={!metamaskAccount}
+          >
+            Remaining
+          </button>
+          <div className='btn btn-secondary'>{remainingCount}</div>
+        </div>
+        <div className='d-flex flex-column'>
+          <button
+            type='button'
+            className='btn btn-success'
+            disabled={!metamaskAccount}
+          >
+            Contract Balance
+          </button>
+          <div className='btn btn-secondary'>{contractBalance}</div>
+        </div>
+      </div>
+      <div className='text-center mt-4 d-flex justify-content-center row'>
+        <button
+          type='button'
+          className='btn btn-dark col-3 py-2'
+          disabled={!metamaskAccount}
+          onClick={setMint}
+        >
+          Mint random
+        </button>
+      </div>
 
-      <main>
-        <header>
-          <h1>Jeff Delaney</h1>
-          <p>🚀 Welcome to my website!</p>
-        </header>
+      {loading && <Loader />}
 
-        <blockquote>
-          <p>I like making stuff and putting it on the internet</p>
-        </blockquote>
-
-        <section>
-          <h2>📜 Manifesto</h2>
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat. Duis aute irure dolor in
-            reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-            pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-            culpa qui officia deserunt mollit anim id est laborum.
-          </p>
-
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat. Duis aute irure dolor in
-            reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-            pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-            culpa qui officia deserunt mollit anim id est laborum.
-          </p>
-
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat. Duis aute irure dolor in
-            reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-            pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-            culpa qui officia deserunt mollit anim id est laborum.
-          </p>
-        </section>
-
-        <section className='light'>
-          <h2>👩🏽‍🚀 Projects</h2>
-
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat. Duis aute irure dolor in
-            reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-            pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-            culpa qui officia deserunt mollit anim id est laborum.
-          </p>
-
-          <h2>🏆 Accomplishments</h2>
-
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat. Duis aute irure dolor in
-            reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-            pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-            culpa qui officia deserunt mollit anim id est laborum.
-          </p>
-        </section>
-
-        <blockquote>
-          <p>The best way out is always through </p>
-          <p>-Robert Frost</p>
-        </blockquote>
-
-        <section className='left'>
-          <h2>🌮 Work History</h2>
-
-          <h3>McDonalds</h3>
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat. Duis aute irure dolor in
-            reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-            pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-            culpa qui officia deserunt mollit anim id est laborum.
-          </p>
-          <h3>Burger King</h3>
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat. Duis aute irure dolor in
-            reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-            pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-            culpa qui officia deserunt mollit anim id est laborum.
-          </p>
-          <h3>Taco Bell</h3>
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat. Duis aute irure dolor in
-            reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-            pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-            culpa qui officia deserunt mollit anim id est laborum.
-          </p>
-        </section>
-
-        <blockquote>
-          <p>Thanks for watching!</p>
-        </blockquote>
-      </main>
+      <GoogleReCaptchaProvider reCaptchaKey="6Lf3JqwZAAAAAM7EVYnGEw3QtmXEI8gWxjr3rdGZ">
+        <MintButton />
+      </GoogleReCaptchaProvider>
     </div>
   )
 }

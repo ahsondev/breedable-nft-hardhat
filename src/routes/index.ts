@@ -1,5 +1,5 @@
 import Home from 'pages/Home'
-import Home1 from 'pages/Home1'
+import Mint from 'pages/Mint'
 
 const routes: any[] = [
   {
@@ -7,8 +7,8 @@ const routes: any[] = [
     component: Home
   },
   {
-    path: '/home1',
-    component: Home1
+    path: '/home',
+    component: Mint
   }
 ]
 
