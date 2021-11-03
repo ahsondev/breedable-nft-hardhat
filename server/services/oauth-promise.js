@@ -2,8 +2,8 @@
 //and keep our code sexier
 
 module.exports = (oauthCallback) => {
-  const CONSUMER_KEY = process.env.CONSUMER_KEY
-  const CONSUMER_SECRET = process.env.CONSUMER_SECRET
+  const CONSUMER_KEY = process.env.TWITTER_CONSUMER_KEY
+  const CONSUMER_SECRET = process.env.TWITTER_CONSUMER_SECRET_KEY
   const _oauth = new (require('oauth')).OAuth(
     'https://api.twitter.com/oauth/request_token',
     'https://api.twitter.com/oauth/access_token',

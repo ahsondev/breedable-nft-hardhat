@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import TwitterLogin from 'react-twitter-auth'
 import config from 'utils/config'
+import api from 'utils/api'
 
 import './MintButton.scoped.scss'
 
@@ -16,6 +17,22 @@ const MintButton = () => {
     user: null,
     token: '',
   })
+
+  const onTwitterLogin = () => {
+    (async () => {
+      
+      try {
+        //OAuth Step 1
+        const response = await api.post('/twitter/oauth/request_token')
+        const { oauth_token } = response.data;
+        //Oauth Step 2
+        window.open(`https://api.twitter.com/oauth/authenticate?oauth_token=${oauth_token}`)
+      } catch (error) {
+        console.error(error); 
+      }
+      
+    })();
+  }
 
   const onTwitterSuccess = (response: any) => {
     const token = response.headers.get('x-auth-token')
@@ -46,14 +63,9 @@ const MintButton = () => {
 
   return (
     <div>
-    <button onClick={handleSubmit} type='button' className='mint'>
+    <button onClick={onTwitterLogin} type='button' className='mint'>
       Jack In
     </button>
-      <TwitterLogin
-        loginUrl={config.apiUrl + "/auth/twitter"}
-        requestTokenUrl={config.apiUrl + "/auth/twitter/reverse"}
-        onFailure={onTwitterFailure} onSuccess={onTwitterSuccess}
-      />
     </div>
   )
 }

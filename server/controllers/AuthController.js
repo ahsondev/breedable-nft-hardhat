@@ -1,21 +1,27 @@
-const oauthCallback = process.env.FRONTEND_URL
+const oauthCallback = process.env.REDIRECT_AUTH_URL
+console.log("oauthCallback: ", oauthCallback)
 const oauth = require('../services/oauth-promise')(oauthCallback)
 const COOKIE_NAME = 'oauth_token'
 
 let tokens = {}
 
 async function getRequestToken(req, res, next) {
-  const { oauth_token, oauth_token_secret } = await oauth.getOAuthRequestToken()
+  try {
+    const { oauth_token, oauth_token_secret } = await oauth.getOAuthRequestToken()
+    res.cookie(COOKIE_NAME, oauth_token, {
+      maxAge: 15 * 60 * 1000, // 15 minutes
+      secure: true,
+      httpOnly: true,
+      sameSite: true,
+    })
+  
+    tokens[oauth_token] = { oauth_token_secret }
+    res.json({ oauth_token })
+  } catch (e) {
+    console.log('Exception: ', e)
+  }
 
-  res.cookie(COOKIE_NAME, oauth_token, {
-    maxAge: 15 * 60 * 1000, // 15 minutes
-    secure: true,
-    httpOnly: true,
-    sameSite: true,
-  })
-
-  tokens[oauth_token] = { oauth_token_secret }
-  res.json({ oauth_token })
+  
 }
 
 async function getOAuthToken(req, res, next) {
