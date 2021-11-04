@@ -1,5 +1,4 @@
 const oauthCallback = process.env.REDIRECT_AUTH_URL
-console.log("oauthCallback: ", oauthCallback)
 const oauth = require('../services/oauth-promise')(oauthCallback)
 const COOKIE_NAME = 'oauth_token'
 const helper = require('../services/helper')
@@ -12,10 +11,8 @@ async function getOAuthToken(req, res, next) {
   try {
     const { oauth_token, oauth_token_secret } = await oauth.getOAuthRequestToken()
     tokens[oauth_token] = { oauth_token_secret }
-    console.log("getOAuthToken: ", tokens)
     res.json({ oauth_token })
   } catch (e) {
-    console.log('Exception: ', e)
   }  
 }
 
@@ -43,8 +40,6 @@ async function getAccessToken(req, res, next) {
 async function getProfileBanner(req, res, next) {
   try {
     const oauth_token = helper.decrypt(req.body.data);
-    console.log("getProfileBanner oauth_token:", oauth_token)
-    console.log("getProfileBanner oauth_token:", tokens)
     if (tokenAccessCounts[oauth_token]) {
       res.status(403).json({message: "You already minted"});
       return
