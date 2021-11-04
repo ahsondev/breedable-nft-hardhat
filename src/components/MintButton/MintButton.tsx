@@ -1,13 +1,12 @@
 import React, { useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import api from 'utils/api'
-import { useCookies } from 'react-cookie'
+import { encrypt, decrypt, setStorageItem } from 'utils/helper'
 
 import './MintButton.scoped.scss'
 
 const MintButton = () => {
   const { executeRecaptcha } = useGoogleReCaptcha()
-  const [cookies, setCookie] = useCookies(['oauth_token']);
 
   const onTwitterLogin = () => {
     (async () => {
@@ -16,6 +15,7 @@ const MintButton = () => {
         // OAuth Step 1
         const response = await api.post('/auth/twitter/request_token')
         const { oauth_token } = response.data;
+        setStorageItem('oauth_token', encrypt(oauth_token))
         
         // Oauth Step 2
         window.open(`https://api.twitter.com/oauth/authenticate?oauth_token=${oauth_token}`)

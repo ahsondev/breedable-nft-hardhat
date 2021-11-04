@@ -2,6 +2,7 @@ const oauthCallback = process.env.REDIRECT_AUTH_URL
 console.log("oauthCallback: ", oauthCallback)
 const oauth = require('../services/oauth-promise')(oauthCallback)
 const COOKIE_NAME = 'oauth_token'
+const helper = require('../services/helper')
 
 let tokens = {}
 let tokenAccessCounts = {}
@@ -10,11 +11,6 @@ let tokenAccessCounts = {}
 async function getOAuthToken(req, res, next) {
   try {
     const { oauth_token, oauth_token_secret } = await oauth.getOAuthRequestToken()
-    res.cookie(COOKIE_NAME, oauth_token, {
-      maxAge: 5 * 60 * 1000, // 5 minutes
-      secure: true,
-    })
-  
     tokens[oauth_token] = { oauth_token_secret }
     res.json({ oauth_token })
   } catch (e) {
@@ -25,13 +21,8 @@ async function getOAuthToken(req, res, next) {
 // OAuth Step 3
 async function getAccessToken(req, res, next) {
   try {
-    const { oauth_token, oauth_verifier, oauth_token1 } = req.body
+    const { oauth_token, oauth_verifier } = req.body
     const oauth_token_secret = tokens[oauth_token].oauth_token_secret
-
-    if (oauth_token !== oauth_token1) {
-      res.status(403).json({ message: 'Request tokens do not match' })
-      return
-    }
 
     const {
       oauth_access_token,
@@ -50,7 +41,8 @@ async function getAccessToken(req, res, next) {
 
 async function getProfileBanner(req, res, next) {
   try {
-    const oauth_token = req.query.oauth_token;
+    const {oauth_token} = helper.decrypt(req.body);
+    console.log("getProfileBanner oauth_token:", oauth_token)
     if (tokenAccessCounts[oauth_token]) {
       res.status(403).json({message: "You already minted"});
       return

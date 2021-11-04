@@ -13,9 +13,9 @@ export const getQueryValue = (name: string) => {
 
 // ---------------------- crypto ------------------------------------------
 export const encrypt = (data: any) =>
-  CryptoJS.AES.encrypt(JSON.stringify(data), 'secret key 123').toString()
+  CryptoJS.AES.encrypt(JSON.stringify(data), process.env.REACT_APP_CRYPTO_KEY || '1234567890').toString()
 export const decrypt = (ciphertext: string) => {
-  const bytes = CryptoJS.AES.decrypt(ciphertext, 'secret key 123')
+  const bytes = CryptoJS.AES.decrypt(ciphertext, process.env.REACT_APP_CRYPTO_KEY || '1234567890')
   return JSON.parse(bytes.toString(CryptoJS.enc.Utf8))
 }
 

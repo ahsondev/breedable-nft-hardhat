@@ -3,7 +3,7 @@ import Loader from 'components/Loader'
 import { NotificationManager } from 'components/Notification'
 import queryString from 'query-string'
 import api from 'utils/api'
-import { useCookies } from 'react-cookie'
+import { encrypt, decrypt, getStorageItem } from 'utils/helper'
 
 interface Props {}
 
@@ -16,15 +16,13 @@ const Mint = (props: Props) => {
     url: ''
   })
 
-  const [cookies, setCookie] = useCookies(['oauth_token']);
-
   useEffect(() => {
     ;(async () => {
       const { oauth_token, oauth_verifier } = queryString.parse(window.location.search)
       if (oauth_token && oauth_verifier) {
         try {
           // Oauth Step 3
-          await api.post('/auth/twitter/access_token', {oauth_token, oauth_verifier, oauth_token1: cookies?.oauth_token})
+          await api.post('/auth/twitter/access_token', {oauth_token, oauth_verifier})
         } catch (error) {
           console.error(error)
         }
@@ -34,7 +32,9 @@ const Mint = (props: Props) => {
         // Authenticated Resource Access
         const {
           data: { name, profile_image_url_https, status, entities },
-        } = await api.get('/auth/twitter/profile_banner?oauth_token=' + cookies?.oauth_token)
+        } = await api.post('/auth/twitter/profile_banner', {
+          data: getStorageItem('oauth_token', '')
+        })
 
         setTwitterLogin({
           isLoggedIn: true,
@@ -47,7 +47,7 @@ const Mint = (props: Props) => {
         console.error(error)
       }
     })()
-  }, [cookies])
+  }, [])
 
   return (
     <div className='mint-page'>
