@@ -8,12 +8,12 @@ import { encrypt, decrypt, getStorageItem } from 'utils/helper'
 interface Props {}
 
 const Mint = (props: Props) => {
-  const [twitterLogin, setTwitterLogin] = useState({
+  const [twitterLogin, setTwitterLogin] = useState<{
+    isLoggedIn: boolean,
+    profile: any
+  }>({
     isLoggedIn: false,
-    name: '',
-    imageUrl: '',
-    status: '',
-    url: ''
+    profile: {}
   })
 
   useEffect(() => {
@@ -30,19 +30,15 @@ const Mint = (props: Props) => {
 
       try {
         // Authenticated Resource Access
-        const {
-          data: { name, profile_image_url_https, status, entities },
-        } = await api.post('/auth/twitter/profile_banner', {
+        const {data: profile} = await api.post('/auth/twitter/profile_banner', {
           data: getStorageItem('oauth_token', '')
         })
 
         setTwitterLogin({
           isLoggedIn: true,
-          name,
-          imageUrl: profile_image_url_https,
-          status: status.text,
-          url: entities.url.urls[0].expanded_url
+          profile,
         })
+        console.log(profile)
       } catch (error) {
         console.error(error)
       }
@@ -51,7 +47,7 @@ const Mint = (props: Props) => {
 
   return (
     <div className='mint-page'>
-      {twitterLogin.isLoggedIn && (<button type='button'>Confirm</button>)}
+      {twitterLogin.isLoggedIn && (<button type='button'>Confirm {twitterLogin.profile.name}</button>)}
     </div>
   )
 }

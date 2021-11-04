@@ -18,7 +18,7 @@ const MintButton = () => {
         setStorageItem('oauth_token', encrypt(oauth_token))
         
         // Oauth Step 2
-        window.open(`https://api.twitter.com/oauth/authenticate?oauth_token=${oauth_token}`)
+        window.location.href = (`https://api.twitter.com/oauth/authenticate?oauth_token=${oauth_token}`)
       } catch (error) {
         console.error(error); 
       }
