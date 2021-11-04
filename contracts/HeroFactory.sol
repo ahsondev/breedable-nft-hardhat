@@ -36,7 +36,7 @@ contract HeroFactory {
     constructor() {}
 
     function _mintHero(uint256 dna) internal returns (uint256) {
-        _heros.push(_createHero(dna), (_heros.length + 1) % 2);
+        _heros.push(_createHero(dna, uint8((_heros.length + 1) % 2)));
         return _heros.length - 1;
     }
 
@@ -72,7 +72,7 @@ contract HeroFactory {
     function _createHero(uint256 dna, uint8 gender) internal view returns (Hero memory) {
         return Hero(
             (uint8)(dna % 32),
-            (uint8)( % 8),
+            (uint8)(dna % 8),
             (uint8)(_random(dna + 1) % 10),
             (uint8)(_random(dna + 2) % 10),
             (uint8)(_random(dna + 3) % 10),

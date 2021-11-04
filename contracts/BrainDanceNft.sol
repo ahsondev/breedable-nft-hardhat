@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
-import "./Mintable.sol";
+// import "./Mintable.sol";
 import "./HeroFactory.sol";
 
 contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
@@ -17,8 +17,8 @@ contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
     uint256 public constant INITIAL_TOKEN_COUNT = 10101;
 
     // initial token price
-    uint256 public constant MINT_PRICE = 0.001 ether;
-    uint256 public constant BREED_PRICE = 0.001 ether;
+    uint256 public constant MINT_PRICE = 0.07 ether;
+    uint256 public constant BREED_PRICE = 0.02 ether;
     
     // creator's addresses
     address public constant ABC_ADDRESS = 0x396823F49AA9f0e3FAC4b939Bc27aD5cD88264Db;
@@ -57,6 +57,7 @@ contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
     event PauseEvent(bool pause);
     event MintedNewNFT(uint256 indexed tokenId, uint256 indexed remainCount);
     event MintedSpecialNFT();
+
 //  Mintable(argOwner, argImx)
     constructor(
         string memory baseURI,
@@ -223,5 +224,9 @@ contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
         } else {
             return _breedTokenUris[tokenId];
         }
+    }
+
+    function setStarttime() public onlyOwner {
+        _startTime = block.timestamp;
     }
 }
