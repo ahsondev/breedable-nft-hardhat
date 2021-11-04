@@ -7,7 +7,7 @@ const routes: any[] = [
     component: Home
   },
   {
-    path: '/home',
+    path: '/mint',
     component: Mint
   }
 ]

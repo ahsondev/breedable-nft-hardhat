@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import api from 'utils/api'
+import { useCookies } from 'react-cookie'
 
 import './MintButton.scoped.scss'
 
 const MintButton = () => {
   const { executeRecaptcha } = useGoogleReCaptcha()
+  const [cookies, setCookie] = useCookies(['oauth_token']);
 
   const onTwitterLogin = () => {
     (async () => {

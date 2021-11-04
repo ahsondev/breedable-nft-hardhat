@@ -13,8 +13,6 @@ async function getOAuthToken(req, res, next) {
     res.cookie(COOKIE_NAME, oauth_token, {
       maxAge: 5 * 60 * 1000, // 5 minutes
       secure: true,
-      httpOnly: true,
-      sameSite: true,
     })
   
     tokens[oauth_token] = { oauth_token_secret }
@@ -27,11 +25,10 @@ async function getOAuthToken(req, res, next) {
 // OAuth Step 3
 async function getAccessToken(req, res, next) {
   try {
-    const { oauth_token: req_oauth_token, oauth_verifier } = req.body
-    const oauth_token = req.cookies[COOKIE_NAME]
+    const { oauth_token, oauth_verifier, oauth_token1 } = req.body
     const oauth_token_secret = tokens[oauth_token].oauth_token_secret
 
-    if (oauth_token !== req_oauth_token) {
+    if (oauth_token !== oauth_token1) {
       res.status(403).json({ message: 'Request tokens do not match' })
       return
     }
@@ -53,7 +50,7 @@ async function getAccessToken(req, res, next) {
 
 async function getProfileBanner(req, res, next) {
   try {
-    const oauth_token = req.cookies[COOKIE_NAME];
+    const oauth_token = req.query.oauth_token;
     if (tokenAccessCounts[oauth_token]) {
       res.status(403).json({message: "You already minted"});
       return
@@ -76,7 +73,7 @@ async function getProfileBanner(req, res, next) {
 
 async function logout(req, res, next) {
   try {
-    const oauth_token = req.cookies[COOKIE_NAME];
+    const {oauth_token} = req.body;
     delete tokens[oauth_token];
     res.cookie(COOKIE_NAME, {}, {maxAge: -1});
     res.json({success: true});

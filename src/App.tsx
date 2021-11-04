@@ -1,4 +1,4 @@
-import { HashRouter as Router, Route, Redirect, Switch } from 'react-router-dom'
+import { BrowserRouter as Router, Route, Redirect, Switch } from 'react-router-dom'
 import routes from './routes'
 import {NotificationContainer} from 'components/Notification'
 
