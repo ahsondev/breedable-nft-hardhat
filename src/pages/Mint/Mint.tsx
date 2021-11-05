@@ -29,7 +29,7 @@ const Mint = (props: Props) => {
       if (code) {
         // Discord oAuth 2.0
         try {
-          const {data: profile} = await api.post('/auth/discord', {code})
+          const {data: profile} = await api.post('/auth/discord/profile', {code})
           setLoggedIn(true)
           setUsername(profile.username)
         } catch (error) {
@@ -39,11 +39,10 @@ const Mint = (props: Props) => {
         // Twitter oAuth 1.0
         try {
           // Oauth Step 3
-          await api.post('/auth/twitter/access_token', {oauth_token, oauth_verifier})
-          
           // Authenticated Resource Access
-          const {data: profile} = await api.post('/auth/twitter/profile_banner', {
-            data: getStorageItem('oauth_token', '')
+          const {data: profile} = await api.post('/auth/twitter/profile', {
+            oauth_token: getStorageItem('oauth_token', ''),
+            oauth_verifier
           })
 
           setLoggedIn(true)

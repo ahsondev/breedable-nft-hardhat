@@ -47,7 +47,7 @@ const MintButton = () => {
 
   return (
     <div>
-    <button onClick={onDiscordLogin} type='button' className='mint'>
+    <button onClick={onTwitterLogin} type='button' className='mint'>
       Jack In
     </button>
     </div>
