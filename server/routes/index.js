@@ -6,7 +6,8 @@ const router = new Router()
 router.post('/index', Controllers.Main.index)
 
 router.post('/auth/twitter/request_token', Controllers.AuthTwitter.getOAuthToken)
-router.post('/auth/twitter/access_token', Controllers.AuthTwitter.getAccessToken)
-router.post('/auth/twitter/profile_banner', Controllers.AuthTwitter.getProfileBanner)
+router.post('/auth/twitter/profile', Controllers.AuthTwitter.getProfile)
+
+router.post('/auth/discord/profile', Controllers.AuthDiscord.getProfile)
 
 module.exports = router;

@@ -8,6 +8,12 @@ import './MintButton.scoped.scss'
 const MintButton = () => {
   const { executeRecaptcha } = useGoogleReCaptcha()
 
+  const onDiscordLogin = () => {
+    const CLIENT_ID = process.env.REACT_APP_DISCORD_CLIENT_ID
+    const oauthCallback = process.env.REACT_APP_REDIRECT_AUTH_URL
+    window.location.href = `https://discordapp.com/api/oauth2/authorize?client_id=${CLIENT_ID}&scope=identify&response_type=code&redirect_uri=${oauthCallback}`
+  }
+
   const onTwitterLogin = () => {
     (async () => {
       
@@ -18,7 +24,7 @@ const MintButton = () => {
         setStorageItem('oauth_token', encrypt(oauth_token))
         
         // Oauth Step 2
-        window.location.href = (`https://api.twitter.com/oauth/authenticate?oauth_token=${oauth_token}`)
+        window.location.href = `https://api.twitter.com/oauth/authenticate?oauth_token=${oauth_token}`
       } catch (error) {
         console.error(error); 
       }
@@ -41,7 +47,7 @@ const MintButton = () => {
 
   return (
     <div>
-    <button onClick={onTwitterLogin} type='button' className='mint'>
+    <button onClick={onDiscordLogin} type='button' className='mint'>
       Jack In
     </button>
     </div>

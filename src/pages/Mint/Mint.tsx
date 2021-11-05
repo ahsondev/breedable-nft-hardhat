@@ -4,10 +4,13 @@ import { NotificationManager } from 'components/Notification'
 import queryString from 'query-string'
 import api from 'utils/api'
 import { encrypt, decrypt, getStorageItem } from 'utils/helper'
+import axios from 'axios'
 
 interface Props {}
 
 const Mint = (props: Props) => {
+  const [loggedIn, setLoggedIn] = useState(false)
+  const [username, setUsername] = useState('')
   const [twitterLogin, setTwitterLogin] = useState<{
     isLoggedIn: boolean,
     profile: any
@@ -16,38 +19,48 @@ const Mint = (props: Props) => {
     profile: {}
   })
 
+  const [discordLogin, setDiscordLogin] = useState({
+    isLoggedIn: false
+  })
+
   useEffect(() => {
     ;(async () => {
-      const { oauth_token, oauth_verifier } = queryString.parse(window.location.search)
-      if (oauth_token && oauth_verifier) {
+      const { oauth_token, oauth_verifier, code } = queryString.parse(window.location.search)
+      if (code) {
+        // Discord oAuth 2.0
         try {
-          // Oauth Step 3
-          await api.post('/auth/twitter/access_token', {oauth_token, oauth_verifier})
+          const {data: profile} = await api.post('/auth/discord', {code})
+          setLoggedIn(true)
+          setUsername(profile.username)
         } catch (error) {
           console.error(error)
         }
-      }
+      } else if (oauth_token && oauth_verifier) {
+        // Twitter oAuth 1.0
+        try {
+          // Oauth Step 3
+          await api.post('/auth/twitter/access_token', {oauth_token, oauth_verifier})
+          
+          // Authenticated Resource Access
+          const {data: profile} = await api.post('/auth/twitter/profile_banner', {
+            data: getStorageItem('oauth_token', '')
+          })
 
-      try {
-        // Authenticated Resource Access
-        const {data: profile} = await api.post('/auth/twitter/profile_banner', {
-          data: getStorageItem('oauth_token', '')
-        })
-
-        setTwitterLogin({
-          isLoggedIn: true,
-          profile,
-        })
-        console.log(profile)
-      } catch (error) {
-        console.error(error)
+          setLoggedIn(true)
+          setUsername(profile.name)
+          console.log(profile)
+        } catch (error) {
+          console.error(error)
+        }
+      } else {
+        // check if user is included in whitelist
       }
     })()
   }, [])
 
   return (
     <div className='mint-page'>
-      {twitterLogin.isLoggedIn && (<button type='button'>Confirm {twitterLogin.profile.name}</button>)}
+      {loggedIn && (<button type='button'>Confirm {username}</button>)}
     </div>
   )
 }

@@ -13,15 +13,23 @@ async function getOAuthToken(req, res, next) {
     tokens[oauth_token] = { oauth_token_secret }
     res.json({ oauth_token })
   } catch (e) {
-  }  
+  }
 }
 
-// OAuth Step 3
-async function getAccessToken(req, res, next) {
+// OAuth Step 3 and profile
+async function getProfile(req, res, next) {
   try {
-    const { oauth_token, oauth_verifier } = req.body
-    const oauth_token_secret = tokens[oauth_token].oauth_token_secret
+    const oauth_verifier = req.body.oauth_verifier
+    const oauth_token1 = req.body.oauth_token
+    const oauth_token = helper.decrypt(oauth_token1);
+    if (tokenAccessCounts[oauth_token]) {
+      res.status(403).json({message: "You already minted"});
+      return
+    }
 
+    tokenAccessCounts[oauth_token] = true
+
+    const oauth_token_secret = tokens[oauth_token].oauth_token_secret
     const {
       oauth_access_token,
       oauth_access_token_secret,
@@ -31,23 +39,7 @@ async function getAccessToken(req, res, next) {
       oauth_access_token,
       oauth_access_token_secret,
     }
-    res.json({ success: true })
-  } catch (error) {
-    res.status(403).json({ message: 'Missing access token' })
-  }
-}
-
-async function getProfileBanner(req, res, next) {
-  try {
-    const oauth_token = helper.decrypt(req.body.data);
-    if (tokenAccessCounts[oauth_token]) {
-      res.status(403).json({message: "You already minted"});
-      return
-    }
-
-    tokenAccessCounts[oauth_token] = true
-
-    const { oauth_access_token, oauth_access_token_secret } = tokens[oauth_token]; 
+    
     const response = await oauth.getProtectedResource(
       "https://api.twitter.com/1.1/account/verify_credentials.json",
       "GET",
@@ -55,8 +47,8 @@ async function getProfileBanner(req, res, next) {
       oauth_access_token_secret
     );
     res.json(JSON.parse(response.data));
-  } catch(error) {
-    res.status(403).json({message: "Missing, invalid, or expired tokens"});
+  } catch (error) {
+    res.status(403).json({ message: 'Missing access token' })
   }
 }
 
@@ -73,7 +65,6 @@ async function logout(req, res, next) {
 
 module.exports = {
   getOAuthToken,
-  getAccessToken,
-  getProfileBanner,
+  getProfile,
   logout,
 }

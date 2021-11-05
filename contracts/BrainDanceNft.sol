@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
-// import "./Mintable.sol";
 import "./HeroFactory.sol";
 
 contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
@@ -18,7 +17,7 @@ contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
 
     // initial token price
     uint256 public constant MINT_PRICE = 0.07 ether;
-    uint256 public constant BREED_PRICE = 0.02 ether;
+    uint256 public constant BREED_PRICE = 0.026 ether;
     
     // creator's addresses
     address public constant ABC_ADDRESS = 0x396823F49AA9f0e3FAC4b939Bc27aD5cD88264Db;
@@ -34,7 +33,9 @@ contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
 
     // whitelist
     mapping (address => bool) public whiteList;
-    uint private _startTime;
+    uint public startTime;
+    
+    uint256[] public tokenIds;
 
     // special Token #00000
     bool private _specialTokenMinted = false;
@@ -58,14 +59,11 @@ contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
     event MintedNewNFT(uint256 indexed tokenId, uint256 indexed remainCount);
     event MintedSpecialNFT();
 
-//  Mintable(argOwner, argImx)
     constructor(
         string memory baseURI,
         address vrfCoordinator,
         address vrfLinkToken,
-        bytes32 vrfKeyhash//,
-        // address argOwner,
-        // address argImx
+        bytes32 vrfKeyhash
     ) ERC721("BrainDanceNft", "BrainDance") VRFConsumerBase(vrfCoordinator, vrfLinkToken) {
         setBaseURI(baseURI);
         _vrfCoordinator = vrfCoordinator;
@@ -73,7 +71,7 @@ contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
         _vrfKeyHash = vrfKeyhash;
 
         // mark start time for whitelist
-        _startTime = block.timestamp;
+        startTime = block.timestamp;
         
         address[] memory addrs = new address[](3);
         addrs[0] = ABC_ADDRESS;
@@ -84,6 +82,10 @@ contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
 
         testOwner = msg.sender;
         // should mint #000000
+        
+        for (uint i = 0; i < INITIAL_TOKEN_COUNT; i += 1) {
+            tokenIds.push(i);
+        }
     }
 
     modifier saleIsOpen() {
@@ -111,7 +113,7 @@ contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
 
     // endpoint for mint nft
     function requestRandomNFT(address _to, uint8 amount) public payable saleIsOpen {
-        if (block.timestamp <= _startTime + 4 hours) {
+        if (block.timestamp <= startTime + 4 hours) {
             require(isWhiteList(_to), "Address is not included in whiteList");
         }
         require(amount <= 1, "Max limit");
@@ -141,14 +143,6 @@ contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
         _safeMint(_to, _tokenId);
         emit MintedNewNFT(_tokenId, remainTokenCount());
     }
-
-    // function _mintFor(
-    //     address to,
-    //     uint256 id,
-    //     bytes memory
-    // ) internal override {
-    //     _safeMint(to, id);
-    // }
 
     function walletOfOwner(address owner) external view returns (uint256[] memory) {
         uint256 tokenCount = balanceOf(owner);
@@ -227,6 +221,6 @@ contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
     }
 
     function setStarttime() public onlyOwner {
-        _startTime = block.timestamp;
+        startTime = block.timestamp;
     }
 }
