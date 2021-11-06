@@ -3,7 +3,6 @@ require('@nomiclabs/hardhat-etherscan')
 require('dotenv-flow').config()
 
 module.exports = {
-  defaultNetwork: 'rinkeby',
   solidity: '0.8.0',
   settings: {
     optimizer: {

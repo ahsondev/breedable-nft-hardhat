@@ -1,39 +1,59 @@
 const { expect } = require('chai')
-const config = require('../config')
-const ERC721Config = require('../metadata/temp/ERC721Config.json')
 
 let owner, addr1, addr2, addr3
 let Token
-let hardhatToken
+let token
+
+let provider = ethers.getDefaultProvider();
 
 beforeEach(async function () {
   [owner, addr1, addr2, addr3] = await ethers.getSigners()
   Token = await ethers.getContractFactory('BrainDanceNft')
 
-  hardhatToken = await Token.deploy(
-    'https://gateway.pinata.cloud/ipfs/' + ERC721Config.metadataHash,
-    // ERC721Config.tokenAmount,
-    config.VRFContract.Kovan.VRFCoordinator,
-    config.VRFContract.Kovan.LINKToken,
-    config.VRFContract.Kovan.KeyHash
-  )
-
-  let ret = await hardhatToken.addWhiteLists([owner.address, addr1.address, addr2.address, addr3.address])
+  token = await Token.deploy("BrainDanceNFT", "BrainDance")
+  await token.addWhiteLists([owner.address])
 })
 
 describe('Token contract', function () {
   it('BrainDanceNft token test', async function () {
-    const remainTokenCount = await hardhatToken.remainTokenCount()
-    console.log("remainTokenCount: ", remainTokenCount)
-    // const token = await hardhatToken.requestRandomNFT(owner.address, 1)
-    const ret = await hardhatToken.isWhiteList(addr1.address)
-    console.log(ret)
-    // expect(remainTokenCount).to.equal(ERC721Config.tokenAmount)
+
+    // owner test
+    expect(await token.owner()).to.equal(owner.address);
+
+    // white list test
+    // expect(await token.isWhiteList('0x396823F49AA9f0e3FAC4b939Bc27aD5cD88264Db')).to.equal(true)
+    // expect(await token.isWhiteList('0x892E10CB1299C16e469cf0f79f18CCa639D00F5B')).to.equal(true)
+    // expect(await token.isWhiteList('0xA5DBC34d69B745d5ee9494E6960a811613B9ae32')).to.equal(true)
+
+    console.log("Contract balance: ", ethers.utils.formatEther (await provider.getBalance(token.address)))
+    
+    // mint
+    await expect(owner.sendTransaction({
+      to: token.address,
+      value: ethers.utils.parseEther("0.07"),
+      data: token.mint("uri1")
+    })).to.be.reverted
+
+    for (let i = 0; i < 10; i += 1) {
+      await token.mint("uri1", {
+        value: ethers.utils.parseEther("7")
+      })
+    }
+
+    // pause test
+    await token.setPause(true)
+    await expect(owner.sendTransaction({
+      to: token.address,
+      value: ethers.utils.parseEther("0.07"),
+      data: token.mint("uri1")
+    })).to.be.reverted
+
+    await token.setPause(false)
+    await token.mint("uri1", {
+      value: ethers.utils.parseEther("0.07")
+    })
+
+    console.log("Contract balance: ", ethers.utils.formatEther (await provider.getBalance(token.address)))
+
   })
-  
-  // it('Mint', async function() {
-  //   const token = await hardhatToken.requestRandomNFT(owner.address, 1)
-  //   const remainTokenAmount = await hardhatToken.remainTokenCount()
-  //   expect(1).to.equal(1)
-  // })
 })

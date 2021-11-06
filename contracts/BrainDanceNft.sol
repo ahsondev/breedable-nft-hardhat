@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "./HeroFactory.sol";
 
-contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
+contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
     using SafeMath for uint256;
     using Strings for uint256;
 
@@ -24,52 +23,26 @@ contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
     address public constant XYZ_ADDRESS = 0x892E10CB1299C16e469cf0f79f18CCa639D00F5B;
     address public constant TEST_ADDRESS = 0xA5DBC34d69B745d5ee9494E6960a811613B9ae32;
 
-    // for VRF function
-    bytes32 private _vrfKeyHash;
-    uint256 private _vrfFee = 0.1 * 10**18; // 0.1 LINK
-    address private _vrfLinkToken;
-    address private _vrfCoordinator;
-    mapping(bytes32 => address) requestToSender; // state variable for VRF
-
     // whitelist
     mapping (address => bool) public whiteList;
     uint public startTime;
-    
-    uint256[] public tokenIds;
-
-    // special Token #00000
-    bool private _specialTokenMinted = false;
 
     // if true, stops minting
     bool private bPaused = false;
 
-    // baseToken's URI
-    string private _baseTokenURI;
+    // token's URI
+    mapping (uint256 => string) private _tokenUris;
 
     uint256 public mintedInitialTokenCount = 0;
 
     // breed tokens
-    mapping(uint256 => string) private _breedTokenUris;
-    uint256 private _breedTokenCount;
-
-    address public testOwner;
+    uint256 private breedTokenCount = 0;
 
     // events
     event PauseEvent(bool pause);
-    event MintedNewNFT(uint256 indexed tokenId, uint256 indexed remainCount);
-    event MintedSpecialNFT();
+    event MintedNewNFT(uint256 indexed tokenId);
 
-    constructor(
-        string memory baseURI,
-        address vrfCoordinator,
-        address vrfLinkToken,
-        bytes32 vrfKeyhash
-    ) ERC721("BrainDanceNft", "BrainDance") VRFConsumerBase(vrfCoordinator, vrfLinkToken) {
-        setBaseURI(baseURI);
-        _vrfCoordinator = vrfCoordinator;
-        _vrfLinkToken = vrfLinkToken;
-        _vrfKeyHash = vrfKeyhash;
-
+    constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) {
         // mark start time for whitelist
         startTime = block.timestamp;
         
@@ -80,76 +53,39 @@ contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
 
         addWhiteLists(addrs);
 
-        testOwner = msg.sender;
         // should mint #000000
-        
-        for (uint i = 0; i < INITIAL_TOKEN_COUNT; i += 1) {
-            tokenIds.push(i);
-        }
     }
 
-    modifier saleIsOpen() {
-        require(remainTokenCount() >= 0, "Soldout!");
-        require(!bPaused, "Sales not open");
-        _;
-    }
-
-    function setBaseURI(string memory baseURI) public onlyOwner {
-        _baseTokenURI = baseURI;
-    }
-
-    function _baseURI() internal view virtual override returns (string memory) {
-        return _baseTokenURI;
+    function setTokenURI(uint256 tokenId_, string memory tokenUri_) public onlyOwner {
+        _tokenUris[tokenId_] = tokenUri_;
     }
 
     function remainTokenCount() public view returns (uint256) {
         return INITIAL_TOKEN_COUNT - mintedInitialTokenCount;
     }
 
-    function mintedTokenCount() public view returns (uint256)
-    {
-        return _heros.length;
-    }
-
-    // endpoint for mint nft
-    function requestRandomNFT(address _to, uint8 amount) public payable saleIsOpen {
+    function mint(string memory tokenUri_) public payable {
+        require(!bPaused, "Sale Paused");
         if (block.timestamp <= startTime + 4 hours) {
-            require(isWhiteList(_to), "Address is not included in whiteList");
+            require(isWhiteList(msg.sender), "Address is not included in whiteList");
         }
-        require(amount <= 1, "Max limit");
-        require(
-            mintedInitialTokenCount + amount + (_specialTokenMinted ? 0 : 1) <= INITIAL_TOKEN_COUNT,
-            "Max limit"
-        );
-        require(msg.value >= MINT_PRICE.mul(amount), "Value below price");
-        require(
-            LINK.balanceOf(address(this)) >= _vrfFee * amount,
-            "Not enough LINK - fill contract with faucet"
-        );
+        require(mintedInitialTokenCount < INITIAL_TOKEN_COUNT, "Max limit");
+        require(msg.value >= MINT_PRICE, "Value below price");
 
-        for (uint8 i = 0; i < amount; i += 1) {
-            bytes32 requestId = requestRandomness(_vrfKeyHash, _vrfFee);
-            requestToSender[requestId] = _to;
-        }
-    }
-
-    /** * Callback function used by VRF Coordinator */
-    function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
+        _tokenUris[mintedInitialTokenCount] = tokenUri_;
+        _mintHero(mintedInitialTokenCount);
+        _safeMint(msg.sender, mintedInitialTokenCount);
+        emit MintedNewNFT(mintedInitialTokenCount);
         mintedInitialTokenCount += 1;
-        _mintAnElement(requestToSender[requestId], _mintHero(randomness));
-    }
-
-    function _mintAnElement(address _to, uint256 _tokenId) private {
-        _safeMint(_to, _tokenId);
-        emit MintedNewNFT(_tokenId, remainTokenCount());
     }
 
     function walletOfOwner(address owner) external view returns (uint256[] memory) {
         uint256 tokenCount = balanceOf(owner);
         uint256[] memory tokensId = new uint256[](tokenCount);
         uint256 iToken = 0;
-        for (uint256 i = 0; i < _heros.length; i++) {
-            if (ownerOf(i) == owner) {
+        uint256 total = totalSupply();
+        for (uint256 i = 0; i < total; i++) {
+            if (ownerOf(tokenByIndex(i)) == owner) {
                 tokensId[iToken++] = i;
             }
         }
@@ -174,15 +110,14 @@ contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
         require(success, "Transfer failed.");
     }
 
-    function mintUnsoldTokens() public onlyOwner {
-        require(bPaused, "Pause is disable");
+    function mintUnsoldTokens(address to_, string[] memory tokenUris_) public onlyOwner {
+        require(tokenUris_.length == INITIAL_TOKEN_COUNT - mintedInitialTokenCount + 1, "TokenUris should match");
 
         for (uint256 i = mintedInitialTokenCount; i < INITIAL_TOKEN_COUNT; i++) {
-            uint256 rand = uint256(keccak256(abi.encodePacked(i.toString())));
-            _mintAnElement(owner(), _mintHero(rand));
+            _tokenUris[mintedInitialTokenCount + i] = tokenUris_[i - mintedInitialTokenCount];
+            _mintHero(mintedInitialTokenCount + i);
+            _safeMint(to_, mintedInitialTokenCount + i);
         }
-
-        mintedInitialTokenCount = INITIAL_TOKEN_COUNT;
     }
 
     // add whitelist
@@ -202,22 +137,20 @@ contract BrainDanceNft is ERC721, VRFConsumerBase, Ownable, HeroFactory {
         whiteList[addr] = false;
     }
 
-    function mintBreedToken(address to_, string memory tokenUri_, uint256 heroId1_, uint256 heroId2_) public payable {
-        require(msg.value >= BREED_PRICE.mul(1), "Value below price");
-        _safeMint(to_, _breedHero(heroId1_, heroId2_));
-        _breedTokenUris[_breedTokenCount + INITIAL_TOKEN_COUNT] = tokenUri_;
-        _breedTokenCount += 1;
+    function mintBreedToken(string memory tokenUri_, uint256 heroId1_, uint256 heroId2_) public payable {
+        require(msg.value >= BREED_PRICE, "Value below price");
+        uint256 tokenId = breedTokenCount + INITIAL_TOKEN_COUNT;
+        _breedHero(heroId1_, heroId2_, tokenId);
+        _safeMint(msg.sender, tokenId);
+        _tokenUris[tokenId] = tokenUri_;
+        breedTokenCount += 1;
+        emit MintedNewNFT(tokenId);
     }
 
     // breed token's tokenURI
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
-
-        if (tokenId < INITIAL_TOKEN_COUNT) {
-            return ERC721.tokenURI(tokenId);
-        } else {
-            return _breedTokenUris[tokenId];
-        }
+        return _tokenUris[tokenId];
     }
 
     function setStarttime() public onlyOwner {
