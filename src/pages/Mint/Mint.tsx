@@ -23,7 +23,39 @@ const Mint = (props: Props) => {
     isLoggedIn: false
   })
 
-  
+  useEffect(() => {
+    ;(async () => {
+      const { oauth_token, oauth_verifier, code } = queryString.parse(window.location.search)
+      if (code) {
+        // Discord oAuth 2.0
+        try {
+          const {data: profile} = await api.post('/auth/discord/profile', {code})
+          setLoggedIn(true)
+          setUsername(profile.username)
+        } catch (error) {
+          console.error(error)
+        }
+      } else if (oauth_token && oauth_verifier) {
+        // Twitter oAuth 1.0
+        try {
+          // Oauth Step 3
+          // Authenticated Resource Access
+          const {data: profile} = await api.post('/auth/twitter/profile', {
+            oauth_token: getStorageItem('oauth_token', ''),
+            oauth_verifier
+          })
+
+          setLoggedIn(true)
+          setUsername(profile.name)
+          console.log(profile)
+        } catch (error) {
+          console.error(error)
+        }
+      } else {
+        // check if user is included in whitelist
+      }
+    })()
+  }, [])
 
   return (
     <div className='mint-page'>
