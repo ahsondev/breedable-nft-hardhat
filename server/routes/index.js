@@ -4,6 +4,7 @@ const Controllers = require('../controllers')
 const router = new Router()
 
 router.post('/index', Controllers.Main.index)
+router.post('/mint', Controllers.Main.mint)
 
 router.post('/auth/twitter/request_token', Controllers.AuthTwitter.getOAuthToken)
 router.post('/auth/twitter/profile', Controllers.AuthTwitter.getProfile)

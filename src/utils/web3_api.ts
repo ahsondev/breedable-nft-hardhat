@@ -8,9 +8,10 @@ const wnd = window as any
 
 let web3: any
 
-class BrainDance {
-  nativeContract: any
-  mintNFT = (addr: string, mintPricePerToken: number, amount: number = 1 ) => {
+export class BrainDance {
+  nativeContract: any = null
+
+  mintNFT(addr: string, mintPricePerToken: number, amount: number = 1 ) {
     const priceWei = web3.utils.toWei(mintPricePerToken * amount + '', 'ether') // Convert to wei value
     console.log('mintPricePerToken: ', mintPricePerToken, priceWei)
     // this.nativeContract.methods.requestRandomNFT(addr, amount).send({
@@ -35,7 +36,7 @@ class BrainDance {
     return web3.eth.sendTransaction(tx)
   }
 
-  withdrawEth = (address: string) => {
+  withdrawEth(address: string) {
     new Promise((resolve, reject) => {
       const tx = {
         from: address,
@@ -53,7 +54,7 @@ class BrainDance {
     })
   }
 
-  setPause = (address: string, value: boolean) => {
+  setPause (address: string, value: boolean) {
     new Promise((resolve, reject) => {
       const tx = {
         from: address,
@@ -71,7 +72,7 @@ class BrainDance {
     })
   }
 
-  addWhiteList = (address: string, _address: string) => {
+  addWhiteList(address: string, _address: string) {
     new Promise((resolve, reject) => {
       if (!contract) {
         reject('Contract is not defined')
@@ -93,7 +94,7 @@ class BrainDance {
     })
   }
 
-  removeWhiteList = (address: string, _address: string) => {
+  removeWhiteList(address: string, _address: string) {
     new Promise((resolve, reject) => {
       if (!contract) {
         reject('Contract is not defined')

@@ -1,5 +1,5 @@
 const axios = require('axios')
-const fs = require('fs')
+const fs = require('fs-extra')
 const FormData = require('form-data')
 const recursive = require('recursive-fs')
 const basePathConverter = require('base-path-converter')
@@ -11,7 +11,7 @@ const assetsDir = './metadata/assets'
 const tempMetaDir = './metadata/temp'
 const fileIpfsUrl = 'https://api.pinata.cloud/pinning/pinFileToIPFS'
 const gatewayBaseUrl = 'https://gateway.pinata.cloud/ipfs/'
-const metadataFile = '../metadata/mono_metadata.json'
+const metadataFile = '../metadata/metadata.json'
 let gatewayUrl = ''
 let assetCount = 0
 let tokenCount = 0

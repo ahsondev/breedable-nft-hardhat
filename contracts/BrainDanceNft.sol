@@ -32,6 +32,7 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
 
     // token's URI
     mapping (uint256 => string) private _tokenUris;
+    string public baseURI;
 
     uint256 public mintedInitialTokenCount = 0;
 
@@ -42,9 +43,10 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
     event PauseEvent(bool pause);
     event MintedNewNFT(uint256 indexed tokenId);
 
-    constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) {
+    constructor(string memory name_, string memory symbol_, string memory baseURI_) ERC721(name_, symbol_) {
         // mark start time for whitelist
         startTime = block.timestamp;
+        baseURI = baseURI_;
         
         address[] memory addrs = new address[](3);
         addrs[0] = ABC_ADDRESS;
@@ -64,7 +66,7 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
         return INITIAL_TOKEN_COUNT - mintedInitialTokenCount;
     }
 
-    function mint(string memory tokenUri_) public payable {
+    function mint() public payable {
         require(!bPaused, "Sale Paused");
         if (block.timestamp <= startTime + 4 hours) {
             require(isWhiteList(msg.sender), "Address is not included in whiteList");
@@ -72,7 +74,7 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
         require(mintedInitialTokenCount < INITIAL_TOKEN_COUNT, "Max limit");
         require(msg.value >= MINT_PRICE, "Value below price");
 
-        _tokenUris[mintedInitialTokenCount] = tokenUri_;
+        _tokenUris[mintedInitialTokenCount] = string(abi.encodePacked(baseURI, mintedInitialTokenCount.toString()));
         _mintHero(mintedInitialTokenCount);
         _safeMint(msg.sender, mintedInitialTokenCount);
         emit MintedNewNFT(mintedInitialTokenCount);

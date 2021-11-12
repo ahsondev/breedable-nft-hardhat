@@ -1,5 +1,5 @@
 const hre = require('hardhat')
-const fs = require('fs')
+const fs = require('fs-extra')
 
 async function main() {
   const [deployer] = await ethers.getSigners()

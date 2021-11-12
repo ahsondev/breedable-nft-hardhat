@@ -3,7 +3,7 @@ const compression = require('compression')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser');
 const cors = require('cors')
-const fs = require('fs')
+const fs = require('fs-extra')
 const resolvePath = require('path').resolve
 
 module.exports = function expressApp(routes) {
