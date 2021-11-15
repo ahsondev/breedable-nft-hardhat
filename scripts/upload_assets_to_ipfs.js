@@ -12,6 +12,7 @@ const tempMetaDir = './metadata/temp'
 const fileIpfsUrl = 'https://api.pinata.cloud/pinning/pinFileToIPFS'
 const gatewayBaseUrl = 'https://gateway.pinata.cloud/ipfs/'
 const metadataFile = '../metadata/metadata.json'
+const contractUriile = '../metadata/contracturi.json'
 let gatewayUrl = ''
 let assetCount = 0
 let tokenCount = 0
@@ -58,7 +59,7 @@ const uploadAssets = () => new Promise((resolve, reject) => {
 
 const uploadMetadata = () => new Promise((resolve, reject) => {
   const tokensDir = tempMetaDir + '/tokens'
-  const jsonData = require(metadataFile).metadata
+  const jsonData = require(metadataFile)
 
   // Delete all files in tempMetaDir
   rimraf.sync(tempMetaDir)
@@ -69,13 +70,16 @@ const uploadMetadata = () => new Promise((resolve, reject) => {
 
   // upload each metadata to a specific json file
   jsonData.forEach((metadata, index) => {
+    if (index > 100) {
+      return
+    }
     const tokenId = index.toString().padStart(5, "0")
     tokenCount += 1
     metadata.id = tokenId
-    metadata.image = gatewayUrl + '/' + metadata.id
+    metadata.image = `${gatewayUrl}/image_${tokenId}.png`
     metadata.external_url = metadata.image
 
-    const filename = tokensDir + '/' + metadata.id
+    const filename = tokensDir + '/' + index
     const st = JSON.stringify(metadata, null, 2)
     fs.writeFileSync(filename, st)
   })
@@ -100,7 +104,7 @@ const uploadMetadata = () => new Promise((resolve, reject) => {
 
 const uploadContractUri = () => new Promise((resolve, reject) => {
   const contractUriFile = tempMetaDir + '/contracturi.json'
-  const contractUri = require(metadataFile).contractUri
+  const contractUri = require(contractUriile)
 
   contractUri.image = gatewayUrl + '/' + contractUri.image
 
@@ -123,18 +127,18 @@ const deploy = async () => {
   const res1 = await uploadAssets()
   assetsHash = res1.data.IpfsHash
   gatewayUrl = gatewayBaseUrl + assetsHash
-  console.log("uploaded assets")
+  console.log("uploaded assets: ", assetsHash, gatewayUrl)
 
   // 1. distribute metadata/mono_metadata.json's metadata to metadata/temp/tokens/metadata.id
   // 2. upload distributed files to ipfs
   const res2 = await uploadMetadata()
   metadataHash = res2.data.IpfsHash
-  console.log("uploaded metadata")
+  console.log("uploaded metadata: ", metadataHash)
 
   // upload contracturi.json to ipfs
   const res3 = await uploadContractUri()
   contractUriHash = res3.data.IpfsHash
-  console.log("uploaded contract")
+  console.log("uploaded contract: ", contractUriHash)
 
   const configFile = tempMetaDir + "/ERC721Config.json";
   const metadataConfig = {
