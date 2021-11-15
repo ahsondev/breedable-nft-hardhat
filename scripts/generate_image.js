@@ -5,7 +5,7 @@ const metadata = require('../metadata/metadata.json')
 const { traitSequence } = require('./metadata_rarity_config')
 
 const mainDir = './metadata/assets'
-const basicImageDir = './metadata/basic_image'
+const basicImageDir = './metadata/basic_assets'
 
 function init() {
   fs.emptyDirSync(mainDir)
@@ -14,8 +14,10 @@ function init() {
   }
 }
 
-function generate() {
-  metadata.forEach((metaItem, index) => {
+async function generate() {
+  for (let index = 0; index < metadata.length; index += 1) {
+    const tokenId = index.toString().padStart(5, "0")
+    const metaItem = metadata[index]
     const images = []
     const attrs = [...metaItem.attributes]
     attrs.sort(function (a, b) {
@@ -26,13 +28,17 @@ function generate() {
     attrs.forEach(attr => {
       images.push(`${basicImageDir}/${attr.trait_type}/${attr.value}.png`)
     })
-    mergeImages(images, {Canvas: Canvas}).then((b64) => {
-      const base64Data = b64.replace(/^data:image\/png;base64,/, '')
-      const binaryData = new Buffer(base64Data, 'base64').toString('binary')
-      fs.writeFileSync(mainDir + `/image_${index}.png`, binaryData, 'binary')
-    })
-  })
+    // console.log(images)
+    const b64 = await mergeImages(images, {Canvas: Canvas})
+    const base64Data = b64.replace(/^data:image\/png;base64,/, '')
+    const binaryData = new Buffer(base64Data, 'base64').toString('binary')
+    fs.writeFileSync(mainDir + `/image_${tokenId}.png`, binaryData, 'binary')
+    console.log(tokenId)
+  }
 }
 
-init()
-generate()
+(async () => {
+  init()
+  console.log('removed old data')
+  await generate()
+})();

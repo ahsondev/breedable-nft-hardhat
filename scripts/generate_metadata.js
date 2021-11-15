@@ -12,8 +12,8 @@ function selectOneValue(trait_type, candidates = null) {
   }
 
   const trait_type_values = candidates ? weights[trait_type].filter(val => candidates.includes(val.name)) : weights[trait_type]
-  console.log("candidates: ", candidates)
-  console.log("trait_type_values: ", trait_type_values)
+  // console.log("candidates: ", candidates)
+  // console.log("trait_type_values: ", trait_type_values)
   let sum = 0;
   trait_type_values.forEach(val => sum += val.weight)
   if (!sum) {
@@ -63,11 +63,11 @@ async function generate(total) {
     })
 
     // Primary Role
-    const primaryRole = selectOneValue('Primary Role')
-    metaItem.attributes.push({
-      trait_type: 'Primary Role',
-      value: primaryRole
-    })
+    // const primaryRole = selectOneValue('Primary Role')
+    // metaItem.attributes.push({
+    //   trait_type: 'Primary Role',
+    //   value: primaryRole
+    // })
 
     for (let trait_type in weights) {
       if (preDefinedTraits.includes(trait_type)) {
@@ -80,7 +80,7 @@ async function generate(total) {
 
       metaItem.attributes.push({
         trait_type,
-        value: exclusivePrimaryRole[primaryRole][trait_type] ? selectOneValue(trait_type, exclusivePrimaryRole[primaryRole][trait_type]) : selectOneValue(trait_type)
+        value: selectOneValue(trait_type)//exclusivePrimaryRole[primaryRole][trait_type] ? selectOneValue(trait_type, exclusivePrimaryRole[primaryRole][trait_type]) : selectOneValue(trait_type)
       })
     }
 

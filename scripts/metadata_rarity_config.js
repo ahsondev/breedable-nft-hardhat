@@ -389,7 +389,7 @@ const godMetadata = {
   attributes: [
     {
       trait_type: 'Background',
-      value: 'Lucid'
+      value: 'Circuit'
     },
     {
       trait_type: 'Stance',
@@ -400,28 +400,28 @@ const godMetadata = {
       value: 'Male'
     },
     {
-      trait_type: 'Skin',
-      value: 'Gold'
+      trait_type: 'Skin Color',
+      value: 'Male - Black'
     },
     {
       trait_type: 'Makeup',
-      value: 'Matrix_Guy'
+      value: 'Blue UV'
     },
     {
       trait_type: 'Eyes',
-      value: 'Illuminati'
+      value: 'baked'
     },
     {
-      trait_type: 'Hair',
-      value: 'Bald_Guy'
+      trait_type: 'Male Hair',
+      value: 'Black Fade'
     },
     {
       trait_type: 'Mouth',
-      value: 'chisel_8'
+      value: 'Chisel_8'
     },
     {
       trait_type: 'Facial Costume',
-      value: 'Lucid_Helmet'
+      value: 'Blue Line'
     },
     {
       trait_type: 'Beard',
@@ -432,37 +432,17 @@ const godMetadata = {
       value: 'None'
     },
     {
-      trait_type: 'Guy clothes',
-      value: 'Lucid_Suit'
+      trait_type: 'Male Suit',
+      value: '1 Men'
     },
     {
       trait_type: 'Mods',
-      value: 'None'
-    },
-    {
-      trait_type: 'Weapon hand',
-      value: 'Open'
-    },
-    {
-      trait_type: 'Weapon',
-      value: 'None'
-    },
-    {
-      trait_type: 'Special Weapon',
-      value: 'None'
-    },
-    {
-      trait_type: 'psychology',
-      value: 'INTJ'
-    },
-    {
-      trait_type: 'dating_trait',
       value: 'None'
     }
   ],
 }
 
-const preDefinedTraits = ['Body', 'Primary Role']
+const preDefinedTraits = ['Body']//, 'Primary Role']
 
 const exclusiveTraits = {
   Body: {

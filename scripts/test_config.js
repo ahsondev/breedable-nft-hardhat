@@ -44,5 +44,5 @@ function doTestExclusivePrimaryRole() {
   console.log("----------------------------------------------------------------\n")
 }
 
-doTestExclusivePrimaryRole()
+doTestGod()
 

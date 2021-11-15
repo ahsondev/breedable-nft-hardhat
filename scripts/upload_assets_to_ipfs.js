@@ -48,6 +48,7 @@ const uploadAssets = () => new Promise((resolve, reject) => {
 
     api.post(fileIpfsUrl, data, {
       maxContentLength: 'Infinity',
+      maxBodyLength: 'Infinity',
       headers: {
         'Content-Type': `multipart/form-data; boundary=${data._boundary}`,
       },
@@ -67,9 +68,11 @@ const uploadMetadata = () => new Promise((resolve, reject) => {
   fs.mkdirSync(tokensDir, { recursive: true })
 
   // upload each metadata to a specific json file
-  jsonData.forEach((metadata) => {
+  jsonData.forEach((metadata, index) => {
+    const tokenId = index.toString().padStart(5, "0")
     tokenCount += 1
-    metadata.image = gatewayUrl + '/' + metadata.image
+    metadata.id = tokenId
+    metadata.image = gatewayUrl + '/' + metadata.id
     metadata.external_url = metadata.image
 
     const filename = tokensDir + '/' + metadata.id
@@ -87,6 +90,7 @@ const uploadMetadata = () => new Promise((resolve, reject) => {
 
     api.post(fileIpfsUrl, data, {
       maxContentLength: 'Infinity',
+      maxBodyLength: 'Infinity',
       headers: {
         'Content-Type': `multipart/form-data; boundary=${data._boundary}`
       },
@@ -119,15 +123,18 @@ const deploy = async () => {
   const res1 = await uploadAssets()
   assetsHash = res1.data.IpfsHash
   gatewayUrl = gatewayBaseUrl + assetsHash
+  console.log("uploaded assets")
 
   // 1. distribute metadata/mono_metadata.json's metadata to metadata/temp/tokens/metadata.id
   // 2. upload distributed files to ipfs
   const res2 = await uploadMetadata()
   metadataHash = res2.data.IpfsHash
+  console.log("uploaded metadata")
 
   // upload contracturi.json to ipfs
   const res3 = await uploadContractUri()
   contractUriHash = res3.data.IpfsHash
+  console.log("uploaded contract")
 
   const configFile = tempMetaDir + "/ERC721Config.json";
   const metadataConfig = {
@@ -142,4 +149,6 @@ const deploy = async () => {
   fs.writeFileSync(configFile, st);
 }
 
-deploy()
+(async () => {
+  await deploy()
+})();
