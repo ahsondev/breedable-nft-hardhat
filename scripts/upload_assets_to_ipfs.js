@@ -70,9 +70,9 @@ const uploadMetadata = () => new Promise((resolve, reject) => {
 
   // upload each metadata to a specific json file
   jsonData.forEach((metadata, index) => {
-    if (index > 100) {
-      return
-    }
+    // if (index > 100) {
+    //   return
+    // }
     const tokenId = index.toString().padStart(5, "0")
     tokenCount += 1
     metadata.id = tokenId
