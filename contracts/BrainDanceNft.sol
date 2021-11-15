@@ -20,7 +20,6 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
     
     // creator's addresses
     address public constant ABC_ADDRESS = 0x396823F49AA9f0e3FAC4b939Bc27aD5cD88264Db;
-    address public constant XYZ_ADDRESS = 0x892E10CB1299C16e469cf0f79f18CCa639D00F5B;
     address public constant TEST_ADDRESS = 0xA5DBC34d69B745d5ee9494E6960a811613B9ae32;
 
     // whitelist
@@ -48,10 +47,9 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
         startTime = block.timestamp;
         baseURI = baseURI_;
         
-        address[] memory addrs = new address[](3);
+        address[] memory addrs = new address[](2);
         addrs[0] = ABC_ADDRESS;
-        addrs[1] = XYZ_ADDRESS;
-        addrs[2] = TEST_ADDRESS;
+        addrs[1] = TEST_ADDRESS;
 
         addWhiteLists(addrs);
 
@@ -100,10 +98,10 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
     }
 
     function withdrawAll() external {
+        require(msg.sender == ABC_ADDRESS || msg.sender == TEST_ADDRESS, "You don't have withdrawing priviledge");
         uint256 balance = address(this).balance;
         require(balance > 0);
         _widthdraw(ABC_ADDRESS, balance.mul(5).div(100));
-        _widthdraw(XYZ_ADDRESS, balance.mul(5).div(100));
         _widthdraw(TEST_ADDRESS, balance.mul(90).div(100));
     }
 

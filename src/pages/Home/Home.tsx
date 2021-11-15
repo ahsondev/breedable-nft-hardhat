@@ -16,6 +16,7 @@ const Home = (props: Props) => {
 
   const connectMetamask = async (e: any) => {
     const connectRes = await connectToWallet()
+    console.log(connectRes)
     if (connectRes) {
       setWeb3(connectRes.web3)
       setContract(connectRes.contract)
@@ -23,6 +24,8 @@ const Home = (props: Props) => {
       setMetamaskAccount(account)
 
       connectRes.contract.nativeContract.MINT_PRICE().call().then((res: any) => setPrice(res))
+      console.log("Connected ...")
+      console.log("Connected Address: ", account)
     }
   }
 
@@ -48,12 +51,15 @@ const Home = (props: Props) => {
 
   const handleMint = () => {
     setLoading(true)
-    contract.mintNFT(metamaskAccount, price).then((res: any) => {
-        console.log(res)
-      }, (err: any) => {
-        console.log(err)
-      }
-    ).finally(() => setLoading(false))
+    contract.mintNFT(metamaskAccount, price).on('transactionHash', function(hash: any) {
+    })
+    .on('receipt', function(receipt: any) {
+      console.log(receipt)
+      setLoading(false)
+    })
+    .on('confirmation', function(confirmationNumber: any, receipt: any) {
+    })
+    .on('error', console.error); // If a out of gas error, the second parameter is the receipt.
   }
 
   return (

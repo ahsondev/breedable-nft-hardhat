@@ -1,4 +1,3 @@
-import Web3 from 'web3'
 import contractConfig from 'contracts/config.json'
 import BrainDanceNft from 'contracts/BrainDanceNft.json'
 import { createAlchemyWeb3 } from '@alch/alchemy-web3'
@@ -124,16 +123,19 @@ let contract: BrainDance
 export const connectToWallet = async () => {
   try {
     if (wnd.ethereum) {
+      await wnd.ethereum.send('eth_requestAccounts')
       await wnd.ethereum.request({
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: config.networks[config.network].chainId }],
-      })
+        })
 
-      await wnd.ethereum.send('eth_requestAccounts')
       web3 = createAlchemyWeb3(config.networks[config.network].alchemyWssUrl)
       // web3 = new Web3('wss://eth-kovan.alchemyapi.io/v2/IROGTMfjIr-d3od_IUeYNDzpSVbMHQZY')
-      console.log('provider: ', wnd.ethereum.selectedAddress)
-      contract.nativeContract = connectToContract()
+      contract.nativeContract = new web3.eth.Contract(
+        BrainDanceNft,
+        contractConfig.contractAddress
+      )
+      console.log(1)
       return {
         web3,
         contract,
@@ -142,14 +144,6 @@ export const connectToWallet = async () => {
   } catch (switchError) {}
 
   return null
-}
-
-export const connectToContract = () => {
-  const contract = new web3.eth.Contract(
-    BrainDanceNft,
-    contractConfig.contractAddress
-  )
-  return contract
 }
 
 export const getEthBalance = (addr: string) =>
