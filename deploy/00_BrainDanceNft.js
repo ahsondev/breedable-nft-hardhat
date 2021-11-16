@@ -13,7 +13,7 @@ module.exports = async ({getNamedAccounts, deployments}) => {
   console.log('Deployer: ' + account0)
   console.log('------')
 
-  const baseUri = ERC721Config.gatewayUrl + ERC721Config.metadataHash + '/'
+  const baseUri = process.env.BASE_URI
   const token = await deploy('BrainDanceNft', {
     from: account0,
     args: ["Brain Dance", "BrainDance", baseUri],

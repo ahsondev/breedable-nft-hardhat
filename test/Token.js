@@ -1,5 +1,4 @@
 const { expect } = require('chai')
-const ERC721Config = require('../metadata/temp/ERC721Config.json')
 const { ethers } = require('hardhat')
 
 let owner, addr1, addr2, addr3
@@ -12,7 +11,7 @@ beforeEach(async function() {
   ;[owner, addr1, addr2, addr3] = await ethers.getSigners()
   Token = await ethers.getContractFactory('BrainDanceNft')
 
-  const baseUri = ERC721Config.gatewayUrl + ERC721Config.metadataHash + '/'
+  const baseUri = process.env.BASE_URI
   console.log('baseUri: ', baseUri)
   token = await Token.deploy('BrainDanceNFT', 'BrainDance', baseUri)
   await token.addWhiteLists([owner.address])
