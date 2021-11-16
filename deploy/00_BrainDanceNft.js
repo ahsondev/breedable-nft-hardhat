@@ -25,10 +25,10 @@ module.exports = async ({getNamedAccounts, deployments}) => {
     tokenAmount: 10101,
     deployer: account0
   }
-  fs.writeFileSync('./src/contracts/config.json', JSON.stringify(deployData, null, 2))
+  fs.writeFileSync('./export/contracts/config.json', JSON.stringify(deployData, null, 2))
 
   const contractJson = require('../artifacts/contracts/BrainDanceNft.sol/BrainDanceNft.json')
-  fs.writeFileSync('./src/contracts/BrainDanceNft.json', JSON.stringify(contractJson.abi, null, 2))
+  fs.writeFileSync('./export/contracts/BrainDanceNft.json', JSON.stringify(contractJson.abi, null, 2))
 
   console.log('deployData:', deployData)
 }
