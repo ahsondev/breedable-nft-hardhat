@@ -1,6 +1,7 @@
 import contractConfig from 'contracts/config.json'
 import BrainDanceNft from 'contracts/BrainDanceNft.json'
 import { createAlchemyWeb3 } from '@alch/alchemy-web3'
+import Web3 from 'web3'
 import config from './config'
 
 const wnd = window as any
@@ -10,9 +11,9 @@ let web3: any
 export class BrainDance {
   nativeContract: any = null
 
-  mintNFT(addr: string, mintPricePerToken: number, amount: number = 1 ) {
-    const priceWei = web3.utils.toWei(mintPricePerToken * amount + '', 'ether') // Convert to wei value
-    console.log('mintPricePerToken: ', mintPricePerToken, priceWei)
+  mintNFT(addr: string, mintPricePerToken: number) {
+    // const priceWei = web3.utils.toWei(mintPricePerToken.toString(), 'ether') // Convert to wei value
+    // console.log('mintPricePerToken: ', mintPricePerToken, priceWei)
     // this.nativeContract.methods.requestRandomNFT(addr, amount).send({
     //   from: addr,
     //   value: priceWei,
@@ -27,94 +28,76 @@ export class BrainDance {
       from: addr,
       to: contractConfig.contractAddress,
       // gas: 50000, // 500 000 gas
-      value: priceWei,
+      value: mintPricePerToken,
       // maxPriorityFeePerGas: 1999999987, // 199...987 wei
-      data: this.nativeContract.methods.requestRandomNFT(addr, amount).encodeABI(),
+      data: this.nativeContract.methods.mint().encodeABI(),
+    }
+
+    return web3.eth.sendTransaction(tx)
+  }
+
+  breedNFT(addr: string, heroId1: number, heroId2: number, tokenUri: string) {
+    const tx = {
+      from: addr,
+      to: contractConfig.contractAddress,
+      data: this.nativeContract.methods.mintBreedToken(tokenUri, heroId1, heroId2).encodeABI(),
     }
 
     return web3.eth.sendTransaction(tx)
   }
 
   withdrawEth(address: string) {
-    new Promise((resolve, reject) => {
-      const tx = {
-        from: address,
-        to: contractConfig.contractAddress,
-        data: this.nativeContract.methods.withdrawAll().encodeABI(),
-      }
-      web3.eth.sendTransaction(tx).then((e: any) => {
-        console.log(e)
-        resolve(e)
-      })
-      web3.eth.accounts.signTransaction(
-        tx,
-        process.env.REACT_APP_ACCOUNT_PRIVATE_KEY
-      )
-    })
+    const tx = {
+      from: address,
+      to: contractConfig.contractAddress,
+      data: this.nativeContract.methods.withdrawAll().encodeABI(),
+    }
+    return web3.eth.sendTransaction(tx)
   }
 
-  setPause (address: string, value: boolean) {
-    new Promise((resolve, reject) => {
-      const tx = {
-        from: address,
-        to: contractConfig.contractAddress,
-        data: this.nativeContract.methods.setPause(value + '').encodeABI(),
-      }
-      web3.eth.sendTransaction(tx).then((e: any) => {
-        console.log(e)
-        resolve(e)
-      })
-      web3.eth.accounts.signTransaction(
-        tx,
-        process.env.REACT_APP_ACCOUNT_PRIVATE_KEY
-      )
-    })
+  setPause(address: string, value: boolean) {
+    const tx = {
+      from: address,
+      to: contractConfig.contractAddress,
+      data: this.nativeContract.methods.setPause(value).encodeABI(),
+    }
+    return web3.eth.sendTransaction(tx)
   }
 
-  addWhiteList(address: string, _address: string) {
-    new Promise((resolve, reject) => {
-      if (!contract) {
-        reject('Contract is not defined')
-      }
-
-      const tx = {
-        from: address,
-        to: contractConfig.contractAddress,
-        data: this.nativeContract.methods.addWhiteList(_address).encodeABI(),
-      }
-      web3.eth.sendTransaction(tx).then((e: any) => {
-        console.log(e)
-        resolve(e)
-      })
-      web3.eth.accounts.signTransaction(
-        tx,
-        process.env.REACT_APP_ACCOUNT_PRIVATE_KEY
-      )
-    })
+  addWhiteList(address: string, _addresses: string[]) {
+    const tx = {
+      from: address,
+      to: contractConfig.contractAddress,
+      data: this.nativeContract.methods.addWhiteLists(_addresses).encodeABI(),
+    }
+    return web3.eth.sendTransaction(tx)
   }
 
-  removeWhiteList(address: string, _address: string) {
-    new Promise((resolve, reject) => {
-      if (!contract) {
-        reject('Contract is not defined')
-      }
+  removeWhiteList(address: string, _addresses: string[]) {
+    const tx = {
+      from: address,
+      to: contractConfig.contractAddress,
+      data: this.nativeContract.methods.removeWhiteLists(_addresses).encodeABI(),
+    }
+    return web3.eth.sendTransaction(tx)
+  }
 
-      const tx = {
-        from: address,
-        to: contractConfig.contractAddress,
-        data: this.nativeContract.methods.removeWhiteList(_address).encodeABI(),
-      }
+  setStarttime(address: string) {
+    const tx = {
+      from: address,
+      to: contractConfig.contractAddress,
+      data: this.nativeContract.methods.setStarttime().encodeABI(),
+    }
+    return web3.eth.sendTransaction(tx)
+  }
 
-      web3.eth.sendTransaction(tx).then((e: any) => {
-        resolve(e)
-        console.log(e)
-      })
-
-      web3.eth.accounts.signTransaction(
-        tx,
-        process.env.REACT_APP_ACCOUNT_PRIVATE_KEY
-      )
-    })
+  mintUnsoldTokens(address: string, tokenUris: string[]) {
+    const tx = {
+      from: address,
+      to: contractConfig.contractAddress,
+      data: this.nativeContract.methods.mintUnsoldTokens(address, tokenUris).encodeABI(),
+    }
+    return web3.eth.sendTransaction(tx)
   }
 }
 
@@ -123,7 +106,7 @@ let contract: BrainDance
 export const connectToWallet = async () => {
   try {
     if (wnd.ethereum) {
-      await wnd.ethereum.send('eth_requestAccounts')
+      await wnd.ethereum.request({ method: 'eth_requestAccounts' });
       await wnd.ethereum.request({
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: config.networks[config.network].chainId }],
@@ -131,17 +114,20 @@ export const connectToWallet = async () => {
 
       web3 = createAlchemyWeb3(config.networks[config.network].alchemyWssUrl)
       // web3 = new Web3('wss://eth-kovan.alchemyapi.io/v2/IROGTMfjIr-d3od_IUeYNDzpSVbMHQZY')
+      console.log(BrainDanceNft, contractConfig.contractAddress)
+      contract = new BrainDance()
       contract.nativeContract = new web3.eth.Contract(
         BrainDanceNft,
         contractConfig.contractAddress
       )
-      console.log(1)
       return {
         web3,
         contract,
       }
     }
-  } catch (switchError) {}
+  } catch (switchError) {
+    console.log(switchError)
+  }
 
   return null
 }
