@@ -1,6 +1,5 @@
 const hre = require('hardhat')
 const fs = require('fs-extra')
-const ERC721Config = require('../metadata/temp/ERC721Config.json')
 
 module.exports = async ({getNamedAccounts, deployments}) => {
   const {deploy} = deployments;

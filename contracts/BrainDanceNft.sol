@@ -23,7 +23,6 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
     address public constant OWNER_ADDRESS = 0x3de2f28435F5E1110F7C2a4a0FB963b7509d2C85;
 
     // whitelist
-    mapping (address => bool) public whiteList;
     uint public startTime;
 
     // if true, stops minting
@@ -38,6 +37,10 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
     // breed tokens
     uint256 private breedTokenCount = 0;
 
+    // merkle tree
+    bytes32 private _rootWhitelist = 0xa2fc709bf2f4b9cb44b8a9114485d12d4877bb1beedd81f62f4f85a8056480ee;
+    bytes32 private _rootAuth = 0xa2fc709bf2f4b9cb44b8a9114485d12d4877bb1beedd81f62f4f85a8056480ee;
+
     // events
     event PauseEvent(bool pause);
     event MintedNewNFT(uint256 indexed tokenId);
@@ -47,12 +50,6 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
         // mark start time for whitelist
         startTime = block.timestamp;
         baseURI = baseURI_;
-        
-        address[] memory addrs = new address[](2);
-        addrs[0] = ABC_ADDRESS;
-        addrs[1] = OWNER_ADDRESS;
-
-        addWhiteLists(addrs);
 
         // should mint #00000
         _tokenUris[0] = string(abi.encodePacked(baseURI, "0"));
@@ -79,15 +76,16 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
         return INITIAL_TOKEN_COUNT - mintedInitialTokenCount;
     }
 
-    function mint() public payable {
+    function mint(bytes32[] memory proof, string memory leaf) public payable {
         require(!bPaused, "Sale Paused");
-        if (block.timestamp <= startTime + 24 hours) {
-            require(isWhiteList(msg.sender), "Address is not included in whiteList");
+        if (isPresale()) {
+            require(verifyCode(keccak256(abi.encodePacked(msg.sender)), proof) == _rootWhitelist, "Address is not included in whiteList");
+        } else {
+            require(verifyCode(keccak256(abi.encodePacked(leaf)), proof) == _rootAuth, "Not authenticated");
         }
         require(mintedInitialTokenCount < INITIAL_TOKEN_COUNT, "Max limit");
         require(msg.value >= MINT_PRICE, "Value below price");
 
-        _tokenUris[mintedInitialTokenCount] = string(abi.encodePacked(baseURI, mintedInitialTokenCount.toString()));
         _mintHero(mintedInitialTokenCount);
         _safeMint(msg.sender, mintedInitialTokenCount);
         emit MintedNewNFT(mintedInitialTokenCount);
@@ -138,24 +136,6 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
         mintedInitialTokenCount = INITIAL_TOKEN_COUNT;
     }
 
-    // add whitelist
-    function addWhiteLists(address[] memory addrs) public onlyOwner {
-        for (uint i = 0; i < addrs.length; i += 1) {
-            whiteList[addrs[i]] = true;
-        }
-    }
-
-    function isWhiteList(address addr) public view returns(bool) {
-        return whiteList[addr];
-    }
-
-    // remove whitelist
-    function removeWhiteLists(address[] memory addrs) public onlyOwner {
-        for (uint i = 0; i < addrs.length; i += 1) {
-            whiteList[addrs[i]] = false;
-        }
-    }
-
     function mintBreedToken(string memory tokenUri_, uint256 heroId1_, uint256 heroId2_) public {
         require(_exists(heroId1_) && _exists(heroId2_), "Parents not exist");
         require(heroId1_ != heroId2_, "Parents should not be same");
@@ -170,10 +150,45 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
     // breed token's tokenURI
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+        if (tokenId < INITIAL_TOKEN_COUNT) {
+            return string(abi.encodePacked(baseURI, mintedInitialTokenCount.toString()));
+        }
         return _tokenUris[tokenId];
     }
 
     function setStarttime() public onlyOwner {
         startTime = block.timestamp;
+    }
+
+    function verifyCode(bytes32 leaf, bytes32[] memory proof) private pure returns (bytes32) {
+        bytes32 computedHash = leaf;
+        for (uint256 i = 0; i < proof.length; i++) {
+            bytes32 proofElement = proof[i];
+
+            if (computedHash < proofElement) {
+                // Hash(current computed hash + current element of the proof)
+                computedHash = keccak256(abi.encodePacked(computedHash, proofElement));
+            } else {
+                // Hash(current element of the proof + current computed hash)
+                computedHash = keccak256(abi.encodePacked(proofElement, computedHash));
+            }
+        }
+        return computedHash;
+    }
+
+    function isPresale() public view returns (bool) {
+        return (block.timestamp <= startTime + 24 hours);
+    }
+
+    function setRootWhitelist(bytes32 root_) external onlyOwner {
+        _rootWhitelist = root_;
+    }
+    
+    function setRootAuth(bytes32 root_) external onlyOwner {
+        _rootAuth = root_;
+    }
+
+    function setBaseUri(string memory uri_) external onlyOwner {
+        baseURI = uri_;
     }
 }

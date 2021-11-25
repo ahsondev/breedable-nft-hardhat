@@ -16,10 +16,9 @@
     "solidity-coverage": "^0.7.17"
   },
   "scripts": {
-    "contract:clean": "npx hardhat clean && rimraf ./src/contracts.json",
-    "contract:test": "npx hardhat test",
-    "contract:compile": "npx hardhat compile",
-    "deploy:metadata": "node ./scripts/upload_assets_to_ipfs.js",
+    "clean": "npx hardhat clean && rimraf ./src/contracts.json",
+    "test": "npx hardhat test",
+    "compile": "npx hardhat compile",
     "deploy:kovan": "npx hardhat --network kovan deploy",
     "deploy:rinkeby": "npx hardhat --network rinkeby deploy"
   },

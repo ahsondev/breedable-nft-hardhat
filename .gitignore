@@ -114,4 +114,4 @@ typechain
 cache
 artifacts
 .deps
-deployments
+deployments/
