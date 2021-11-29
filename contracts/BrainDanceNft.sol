@@ -137,8 +137,8 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
     }
 
     function mintBreedToken(string memory tokenUri_, uint256 heroId1_, uint256 heroId2_) public {
-        require(_exists(heroId1_) && _exists(heroId2_), "Parents not exist");
         require(heroId1_ != heroId2_, "Parents should not be same");
+        require(ownerOf(heroId1_) == msg.sender && ownerOf(heroId2_) == msg.sender, "Parents not exist");
         uint256 tokenId = breedTokenCount + INITIAL_TOKEN_COUNT;
         _breedHero(heroId1_, heroId2_, tokenId);
         _safeMint(msg.sender, tokenId);
