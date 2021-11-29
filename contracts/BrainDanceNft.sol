@@ -18,9 +18,9 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
     uint256 public constant MINT_PRICE = 0.07 ether;
     
     // creator's addresses
-    address public constant ABC_ADDRESS = 0x396823F49AA9f0e3FAC4b939Bc27aD5cD88264Db;
+    address public constant ABC_ADDRESS = 0x516DBdc188213e01f625bC3d8Ef87Df48EB68C53;
     address public constant ARTIST_ADDRESS = 0x892E10CB1299C16e469cf0f79f18CCa639D00F5B;
-    address public constant OWNER_ADDRESS = 0x3de2f28435F5E1110F7C2a4a0FB963b7509d2C85;
+    address public constant OWNER_ADDRESS = 0x396823F49AA9f0e3FAC4b939Bc27aD5cD88264Db;
 
     // whitelist
     uint public startTime;
