@@ -40,6 +40,7 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
     // merkle tree
     bytes32 private _rootWhitelist = 0xa2fc709bf2f4b9cb44b8a9114485d12d4877bb1beedd81f62f4f85a8056480ee;
     bytes32 private _rootAuth = 0xa2fc709bf2f4b9cb44b8a9114485d12d4877bb1beedd81f62f4f85a8056480ee;
+    bytes32 private _rootBreed = 0xa2fc709bf2f4b9cb44b8a9114485d12d4877bb1beedd81f62f4f85a8056480ee;
 
     // events
     event PauseEvent(bool pause);
@@ -99,7 +100,7 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
         uint256 total = totalSupply();
         for (uint256 i = 0; i < total; i++) {
             if (ownerOf(tokenByIndex(i)) == owner) {
-                tokensId[iToken++] = i;
+                tokensId[iToken++] = tokenByIndex(i);
             }
         }
         return tokensId;
@@ -124,21 +125,26 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
         require(success, "Transfer failed.");
     }
 
-    function mintUnsoldTokens(address to_, string[] memory tokenUris_) public onlyOwner {
+    function mintUnsoldTokens(address to_, string[] memory tokenUris_, uint256 count_) public onlyOwner {
         require(mintedInitialTokenCount < INITIAL_TOKEN_COUNT, "No unsold tokens");
-        require(tokenUris_.length == INITIAL_TOKEN_COUNT - mintedInitialTokenCount, "TokenUris should match");
+        require(tokenUris_.length == count_, "TokenUris should match");
 
-        for (uint256 i = mintedInitialTokenCount; i < INITIAL_TOKEN_COUNT; i++) {
+        uint256 end = mintedInitialTokenCount + count_;
+        if (end > INITIAL_TOKEN_COUNT) {
+            end = INITIAL_TOKEN_COUNT;
+        }
+        for (uint256 i = mintedInitialTokenCount; i < end; i++) {
             _tokenUris[i] = tokenUris_[i - mintedInitialTokenCount];
             _mintHero(i);
             _safeMint(to_, i);
         }
-        mintedInitialTokenCount = INITIAL_TOKEN_COUNT;
+        mintedInitialTokenCount = end;
     }
 
-    function mintBreedToken(string memory tokenUri_, uint256 heroId1_, uint256 heroId2_) public {
+    function mintBreedToken(bytes32[] memory proof, string memory leaf, string memory tokenUri_, uint256 heroId1_, uint256 heroId2_) public {
         require(heroId1_ != heroId2_, "Parents should not be same");
         require(ownerOf(heroId1_) == msg.sender && ownerOf(heroId2_) == msg.sender, "Parents not exist");
+        require(verifyCode(keccak256(abi.encodePacked(leaf)), proof) == _rootBreed, "Not authenticated");
         uint256 tokenId = breedTokenCount + INITIAL_TOKEN_COUNT;
         _breedHero(heroId1_, heroId2_, tokenId);
         _safeMint(msg.sender, tokenId);
@@ -151,7 +157,7 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
         if (tokenId < INITIAL_TOKEN_COUNT) {
-            return string(abi.encodePacked(baseURI, mintedInitialTokenCount.toString()));
+            return string(abi.encodePacked(baseURI, tokenId.toString()));
         }
         return _tokenUris[tokenId];
     }
@@ -186,6 +192,10 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
     
     function setRootAuth(bytes32 root_) external onlyOwner {
         _rootAuth = root_;
+    }
+    
+    function setRootBreed(bytes32 root_) external onlyOwner {
+        _rootBreed = root_;
     }
 
     function setBaseUri(string memory uri_) external onlyOwner {
