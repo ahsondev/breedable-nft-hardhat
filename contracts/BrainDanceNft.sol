@@ -15,7 +15,9 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
     uint256 public constant INITIAL_TOKEN_COUNT = 10101;
 
     // initial token price
-    uint256 public constant MINT_PRICE = 0.07 ether;
+    uint256 public mintPrice = 0.07 ether;
+    uint256 public breedPrice = 0 ether;
+    uint256 public upgradePrice = 0 ether;
     
     // creator's addresses
     address public constant ABC_ADDRESS = 0x516DBdc188213e01f625bC3d8Ef87Df48EB68C53;
@@ -26,7 +28,7 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
     uint public startTime;
 
     // if true, stops minting
-    bool public bPaused = false;
+    bool public bPaused = true;
 
     // token's URI
     mapping (uint256 => string) private _tokenUris;
@@ -38,9 +40,11 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
     uint256 private breedTokenCount = 0;
 
     // merkle tree
-    bytes32 private _rootWhitelist = 0xa2fc709bf2f4b9cb44b8a9114485d12d4877bb1beedd81f62f4f85a8056480ee;
-    bytes32 private _rootAuth = 0xa2fc709bf2f4b9cb44b8a9114485d12d4877bb1beedd81f62f4f85a8056480ee;
-    bytes32 private _rootBreed = 0xa2fc709bf2f4b9cb44b8a9114485d12d4877bb1beedd81f62f4f85a8056480ee;
+    bytes32 private _rootWhitelist = 0;
+    bytes32 private _rootAuth = 0;
+
+    // signature
+    uint256 private _signatureToken = 0;
 
     // events
     event PauseEvent(bool pause);
@@ -69,9 +73,7 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
         mintedInitialTokenCount += 3;
     }
 
-    function setTokenURI(uint256 tokenId_, string memory tokenUri_) public onlyOwner {
-        _tokenUris[tokenId_] = tokenUri_;
-    }
+    // ---------------- Begin interface ------------------------------------------------------------
 
     function remainTokenCount() public view returns (uint256) {
         return INITIAL_TOKEN_COUNT - mintedInitialTokenCount;
@@ -85,7 +87,7 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
             require(verifyCode(keccak256(abi.encodePacked(leaf)), proof) == _rootAuth, "Not authenticated");
         }
         require(mintedInitialTokenCount < INITIAL_TOKEN_COUNT, "Max limit");
-        require(msg.value >= MINT_PRICE, "Value below price");
+        require(msg.value >= mintPrice, "Value below price");
 
         _mintHero(mintedInitialTokenCount);
         _safeMint(msg.sender, mintedInitialTokenCount);
@@ -106,9 +108,55 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
         return tokensId;
     }
 
-    function setPause(bool pause) public onlyOwner {
-        bPaused = pause;
-        emit PauseEvent(bPaused);
+    function mintBreedToken(
+        uint256 signature
+        , string memory tokenUri_
+        , uint256 heroId1_
+        , uint256 heroId2_
+    ) public payable {
+        require(!bPaused, "Breed Paused");
+        require(verifySignature(signature), "permission error");
+        require(heroId1_ != heroId2_ && ownerOf(heroId1_) == msg.sender && ownerOf(heroId2_) == msg.sender, "Parents error");
+        require(msg.value >= breedPrice, "Value below price");
+        uint256 tokenId = breedTokenCount + INITIAL_TOKEN_COUNT;
+        _breedHero(heroId1_, heroId2_, tokenId);
+        _safeMint(msg.sender, tokenId);
+        _tokenUris[tokenId] = tokenUri_;
+        breedTokenCount += 1;
+        emit BreededNewNFT(tokenId);
+    }
+
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+        bytes memory tempEmptyStringTest = bytes(_tokenUris[tokenId]);
+        if (tempEmptyStringTest.length == 0) {
+            return string(abi.encodePacked(baseURI, tokenId.toString()));
+        }
+        return _tokenUris[tokenId];
+    }
+
+    function isPresale() public view returns (bool) {
+        return (block.timestamp <= startTime + 24 hours);
+    }
+
+    // ---------------- End interface ------------------------------------------------------------
+
+
+    // ---------------- Begin Admin ------------------------------------------------------------
+
+    function mintUnsoldTokens(address to_, uint256 count_) external public {
+        require(msg.sender == ABC_ADDRESS || msg.sender == owner(), "permission error");
+        require(mintedInitialTokenCount < INITIAL_TOKEN_COUNT, "No unsold tokens");
+
+        uint256 end = mintedInitialTokenCount + count_;
+        if (end > INITIAL_TOKEN_COUNT) {
+            end = INITIAL_TOKEN_COUNT;
+        }
+        for (uint256 i = mintedInitialTokenCount; i < end; i++) {
+            _mintHero(i);
+            _safeMint(to_, i);
+        }
+        mintedInitialTokenCount = end;
     }
 
     function withdrawAll() external {
@@ -125,52 +173,77 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
         require(success, "Transfer failed.");
     }
 
-    function mintUnsoldTokens(address to_, string[] memory tokenUris_, uint256 count_) public onlyOwner {
-        require(mintedInitialTokenCount < INITIAL_TOKEN_COUNT, "No unsold tokens");
-        require(tokenUris_.length == count_, "TokenUris should match");
-
-        uint256 end = mintedInitialTokenCount + count_;
-        if (end > INITIAL_TOKEN_COUNT) {
-            end = INITIAL_TOKEN_COUNT;
-        }
-        for (uint256 i = mintedInitialTokenCount; i < end; i++) {
-            _tokenUris[i] = tokenUris_[i - mintedInitialTokenCount];
-            _mintHero(i);
-            _safeMint(to_, i);
-        }
-        mintedInitialTokenCount = end;
+    function setBaseUri(string memory uri_) external onlyOwner {
+        baseURI = uri_;
     }
 
-    function mintBreedToken(bytes32[] memory proof, string memory leaf, string memory tokenUri_, uint256 heroId1_, uint256 heroId2_) public {
-        require(heroId1_ != heroId2_, "Parents should not be same");
-        require(ownerOf(heroId1_) == msg.sender && ownerOf(heroId2_) == msg.sender, "Parents not exist");
-        require(verifyCode(keccak256(abi.encodePacked(leaf)), proof) == _rootBreed, "Not authenticated");
-        uint256 tokenId = breedTokenCount + INITIAL_TOKEN_COUNT;
-        _breedHero(heroId1_, heroId2_, tokenId);
-        _safeMint(msg.sender, tokenId);
-        _tokenUris[tokenId] = tokenUri_;
-        breedTokenCount += 1;
-        emit BreededNewNFT(tokenId);
+    function setTokenURI(uint256 tokenId_, string memory tokenUri_) external onlyOwner {
+        _tokenUris[tokenId_] = tokenUri_;
     }
 
-    // breed token's tokenURI
-    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
-        if (tokenId < INITIAL_TOKEN_COUNT) {
-            return string(abi.encodePacked(baseURI, tokenId.toString()));
-        }
-        return _tokenUris[tokenId];
+    function setPause(bool pause) external onlyOwner {
+        bPaused = pause;
+        emit PauseEvent(bPaused);
     }
 
-    function setStarttime() public onlyOwner {
+    function setStarttime() external onlyOwner {
         startTime = block.timestamp;
     }
+
+    function setRootWhitelist(bytes32 root_) external onlyOwner {
+        _rootWhitelist = root_;
+    }
+    
+    function setRootAuth(bytes32 root_) external onlyOwner {
+        _rootAuth = root_;
+    }
+
+    function setMintPrice(uint256 price) external onlyOwner {
+        mintPrice = price;
+    }
+
+    function setBreedPrice(uint256 price) external onlyOwner {
+        breedPrice = price;
+    }
+
+    function setUpgradePrice(uint256 price) external onlyOwner {
+        upgradePrice = price;
+    }
+
+    function setSignatureToken(uint256 token) external onlyOwner {
+        _signatureToken = token;
+    }
+
+    function setToken(uint256 signature
+        , uint256 tokenId_
+        , string memory uri_
+        , uint256 heroTraits_
+        , uint256 fId_
+        , uint256 mId_
+        , uint256[] memory cIds_
+        , bool reset_
+    ) external payable {
+        bool bOwner = (msg.sender == ABC_ADDRESS || msg.sender == owner());
+        require(_exists(tokenId_), "token not exist");
+        require(bOwner || (ownerOf(tokenId_) == msg.sender && verifySignature(signature)), "permission error");
+        require(bOwner || msg.value >= breedPrice, "Value below price");
+
+        bytes memory tempEmptyStringTest = bytes(uri_);
+        if (tempEmptyStringTest.length > 0) {
+            _tokenUris[tokenId_] = uri_;
+        }
+
+        _setHero(tokenId_, heroTraits_, fId_, mId_, cIds_, reset_ && bOwner);
+    }
+
+    // ---------------- End Admin ------------------------------------------------------------
+
+    // ----------------- Begin Private functions ---------------------------------------------
 
     function verifyCode(bytes32 leaf, bytes32[] memory proof) private pure returns (bytes32) {
         bytes32 computedHash = leaf;
         for (uint256 i = 0; i < proof.length; i++) {
             bytes32 proofElement = proof[i];
-
             if (computedHash < proofElement) {
                 // Hash(current computed hash + current element of the proof)
                 computedHash = keccak256(abi.encodePacked(computedHash, proofElement));
@@ -182,23 +255,11 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
         return computedHash;
     }
 
-    function isPresale() public view returns (bool) {
-        return (block.timestamp <= startTime + 24 hours);
+    function verifySignature(uint256 signature) private view returns (bool) {
+        uint256 m = signature * signature % _signatureToken;
+        uint256 delta = block.timestamp - m * signature % _signatureToken;
+        return (delta < 120);
     }
 
-    function setRootWhitelist(bytes32 root_) external onlyOwner {
-        _rootWhitelist = root_;
-    }
-    
-    function setRootAuth(bytes32 root_) external onlyOwner {
-        _rootAuth = root_;
-    }
-    
-    function setRootBreed(bytes32 root_) external onlyOwner {
-        _rootBreed = root_;
-    }
-
-    function setBaseUri(string memory uri_) external onlyOwner {
-        baseURI = uri_;
-    }
+    // ----------------- End Private functions ---------------------------------------------
 }

@@ -194,19 +194,6 @@
   },
   {
     "inputs": [],
-    "name": "MINT_PRICE",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "OWNER_ADDRESS",
     "outputs": [
       {
@@ -276,6 +263,19 @@
         "internalType": "string",
         "name": "",
         "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "breedPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -575,6 +575,11 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "signature",
+        "type": "uint256"
+      },
+      {
         "internalType": "string",
         "name": "tokenUri_",
         "type": "string"
@@ -592,7 +597,20 @@
     ],
     "name": "mintBreedToken",
     "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "mintPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -601,11 +619,6 @@
         "internalType": "address",
         "name": "to_",
         "type": "address"
-      },
-      {
-        "internalType": "string[]",
-        "name": "tokenUris_",
-        "type": "string[]"
       },
       {
         "internalType": "uint256",
@@ -781,6 +794,32 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
+      }
+    ],
+    "name": "setBreedPrice",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
+      }
+    ],
+    "name": "setMintPrice",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "bool",
         "name": "pause",
         "type": "bool"
@@ -818,10 +857,71 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "token",
+        "type": "uint256"
+      }
+    ],
+    "name": "setSignatureToken",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "setStarttime",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "signature",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenId_",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "uri_",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "heroTraits_",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "fId_",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "mId_",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "cIds_",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "bool",
+        "name": "reset_",
+        "type": "bool"
+      }
+    ],
+    "name": "setToken",
+    "outputs": [],
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -838,6 +938,19 @@
       }
     ],
     "name": "setTokenURI",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
+      }
+    ],
+    "name": "setUpgradePrice",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -996,6 +1109,19 @@
     "name": "transferOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "upgradePrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

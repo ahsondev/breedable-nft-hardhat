@@ -33,6 +33,15 @@ contract HeroFactory {
         _heros[heroId2_].childrenIds.push(tokenId_);
     }
 
+    function _setHero(uint256 tokenId_, uint256 traits, uint256 fatherId, uint256 motherId, uint256[] memory childrenIds, bool reset) internal {
+        _heros[tokenId_].traits = traits;
+        if (reset) {
+            _heros[tokenId_].fatherId = fatherId;
+            _heros[tokenId_].motherId = motherId;
+            _heros[tokenId_].childrenIds = childrenIds;
+        }
+    }
+
     function getHero(uint256 tokenId_) external view returns (Hero memory) {
         return _heros[tokenId_];
     }

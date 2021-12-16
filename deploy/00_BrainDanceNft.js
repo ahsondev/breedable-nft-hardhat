@@ -15,7 +15,7 @@ module.exports = async ({getNamedAccounts, deployments}) => {
   const baseUri = process.env.BASE_URI
   const token = await deploy('BrainDanceNft', {
     from: account0,
-    args: ["BD 1129", "BD1129", baseUri],
+    args: ["BD 121601", "BD121601", baseUri],
     log: true,
   });
 
