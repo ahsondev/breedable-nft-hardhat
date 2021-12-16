@@ -3,12 +3,10 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "./HeroFactory.sol";
 
 contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
-    using SafeMath for uint256;
     using Strings for uint256;
 
     // initial token count
@@ -144,7 +142,7 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
 
     // ---------------- Begin Admin ------------------------------------------------------------
 
-    function mintUnsoldTokens(address to_, uint256 count_) external public {
+    function mintUnsoldTokens(address to_, uint256 count_) external {
         require(msg.sender == ABC_ADDRESS || msg.sender == owner(), "permission error");
         require(mintedInitialTokenCount < INITIAL_TOKEN_COUNT, "No unsold tokens");
 
@@ -163,7 +161,7 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
         require(msg.sender == ABC_ADDRESS || msg.sender == OWNER_ADDRESS || msg.sender == owner(), "You don't have withdrawing priviledge");
         uint256 balance = address(this).balance;
         require(balance >= 10000000000, "Balance is too small");
-        uint256 balance_5p = balance.mul(5).div(100);
+        uint256 balance_5p = balance * 5 / 100;
         _widthdraw(ABC_ADDRESS, balance_5p);
         _widthdraw(OWNER_ADDRESS, balance - balance_5p - 1000);
     }
@@ -225,6 +223,7 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
     ) external payable {
         bool bOwner = (msg.sender == ABC_ADDRESS || msg.sender == owner());
         require(_exists(tokenId_), "token not exist");
+        require(bOwner || !bPaused, "Paused");
         require(bOwner || (ownerOf(tokenId_) == msg.sender && verifySignature(signature)), "permission error");
         require(bOwner || msg.value >= breedPrice, "Value below price");
 
@@ -257,8 +256,9 @@ contract BrainDanceNft is ERC721Enumerable, Ownable, HeroFactory {
 
     function verifySignature(uint256 signature) private view returns (bool) {
         uint256 m = signature * signature % _signatureToken;
-        uint256 delta = block.timestamp - m * signature % _signatureToken;
-        return (delta < 120);
+        m = m * signature % _signatureToken;
+        require(block.timestamp >= m, "signature error");
+        return (block.timestamp - m < 120);
     }
 
     // ----------------- End Private functions ---------------------------------------------
