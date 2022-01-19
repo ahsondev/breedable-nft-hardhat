@@ -91,6 +91,12 @@
         "internalType": "uint256",
         "name": "tokenId",
         "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "count",
+        "type": "uint256"
       }
     ],
     "name": "MintedNewNFT",
@@ -155,7 +161,7 @@
   },
   {
     "inputs": [],
-    "name": "ABC_ADDRESS",
+    "name": "ARTIST_ADDRESS",
     "outputs": [
       {
         "internalType": "address",
@@ -168,7 +174,7 @@
   },
   {
     "inputs": [],
-    "name": "ARTIST_ADDRESS",
+    "name": "CREATIVE_TRND_ADDRESS",
     "outputs": [
       {
         "internalType": "address",
@@ -187,6 +193,19 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "OWNER1_ADDRESS",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -224,19 +243,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "bPaused",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -257,12 +263,12 @@
   },
   {
     "inputs": [],
-    "name": "baseURI",
+    "name": "breedPrice",
     "outputs": [
       {
-        "internalType": "string",
+        "internalType": "uint256",
         "name": "",
-        "type": "string"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -270,7 +276,7 @@
   },
   {
     "inputs": [],
-    "name": "breedPrice",
+    "name": "breedTokenCount",
     "outputs": [
       {
         "internalType": "uint256",
@@ -284,17 +290,25 @@
   {
     "inputs": [
       {
-        "internalType": "uint256[]",
-        "name": "array",
-        "type": "uint256[]"
-      },
-      {
         "internalType": "uint256",
-        "name": "val",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
-    "name": "findIndex",
+    "name": "burn",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "countLimit",
     "outputs": [
       {
         "internalType": "uint256",
@@ -302,7 +316,7 @@
         "type": "uint256"
       }
     ],
-    "stateMutability": "pure",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -335,31 +349,9 @@
     "name": "getChildren",
     "outputs": [
       {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "traits",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "fatherId",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "motherId",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256[]",
-            "name": "childrenIds",
-            "type": "uint256[]"
-          }
-        ],
-        "internalType": "struct HeroFactory.Hero[]",
+        "internalType": "uint256[]",
         "name": "",
-        "type": "tuple[]"
+        "type": "uint256[]"
       }
     ],
     "stateMutability": "view",
@@ -393,52 +385,6 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "heroId1_",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "heroId2_",
-        "type": "uint256"
-      }
-    ],
-    "name": "getChildrenWithParent",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "traits",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "fatherId",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "motherId",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256[]",
-            "name": "childrenIds",
-            "type": "uint256[]"
-          }
-        ],
-        "internalType": "struct HeroFactory.Hero[]",
-        "name": "",
-        "type": "tuple[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
         "name": "tokenId_",
         "type": "uint256"
       }
@@ -461,11 +407,6 @@
             "internalType": "uint256",
             "name": "motherId",
             "type": "uint256"
-          },
-          {
-            "internalType": "uint256[]",
-            "name": "childrenIds",
-            "type": "uint256[]"
           }
         ],
         "internalType": "struct HeroFactory.Hero",
@@ -502,11 +443,6 @@
             "internalType": "uint256",
             "name": "motherId",
             "type": "uint256"
-          },
-          {
-            "internalType": "uint256[]",
-            "name": "childrenIds",
-            "type": "uint256[]"
           }
         ],
         "internalType": "struct HeroFactory.Hero[]",
@@ -542,29 +478,11 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "isPresale",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
-        "internalType": "bytes32[]",
-        "name": "proof",
-        "type": "bytes32[]"
-      },
-      {
-        "internalType": "string",
-        "name": "leaf",
-        "type": "string"
+        "internalType": "uint256",
+        "name": "count",
+        "type": "uint256"
       }
     ],
     "name": "mint",
@@ -575,9 +493,14 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "signature",
-        "type": "uint256"
+        "internalType": "bytes32[]",
+        "name": "proof",
+        "type": "bytes32[]"
+      },
+      {
+        "internalType": "address",
+        "name": "leaf",
+        "type": "address"
       },
       {
         "internalType": "string",
@@ -601,19 +524,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "mintPrice",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -629,6 +539,24 @@
     "name": "mintUnsoldTokens",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "proof",
+        "type": "bytes32[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "count",
+        "type": "uint256"
+      }
+    ],
+    "name": "mintVip",
+    "outputs": [],
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -690,8 +618,14 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "remainTokenCount",
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "prices",
     "outputs": [
       {
         "internalType": "uint256",
@@ -807,25 +741,38 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint256[]",
+        "name": "v",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "setCountLimit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner1",
+        "type": "address"
+      }
+    ],
+    "name": "setOwner1Address",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256[]",
         "name": "price",
-        "type": "uint256"
+        "type": "uint256[]"
       }
     ],
-    "name": "setMintPrice",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bool",
-        "name": "pause",
-        "type": "bool"
-      }
-    ],
-    "name": "setPause",
+    "name": "setPrice",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -834,24 +781,29 @@
     "inputs": [
       {
         "internalType": "bytes32",
-        "name": "root_",
+        "name": "v",
         "type": "bytes32"
       }
     ],
-    "name": "setRootAuth",
+    "name": "setRootSign",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "step",
+        "type": "uint256"
+      },
       {
         "internalType": "bytes32",
-        "name": "root_",
+        "name": "v",
         "type": "bytes32"
       }
     ],
-    "name": "setRootWhitelist",
+    "name": "setRootVip",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -859,19 +811,12 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "token",
-        "type": "uint256"
+        "internalType": "uint8",
+        "name": "flag",
+        "type": "uint8"
       }
     ],
-    "name": "setSignatureToken",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "setStarttime",
+    "name": "setStatusFlag",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -879,9 +824,14 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "signature",
-        "type": "uint256"
+        "internalType": "bytes32[]",
+        "name": "proof",
+        "type": "bytes32[]"
+      },
+      {
+        "internalType": "address",
+        "name": "leaf",
+        "type": "address"
       },
       {
         "internalType": "uint256",
@@ -909,11 +859,6 @@
         "type": "uint256"
       },
       {
-        "internalType": "uint256[]",
-        "name": "cIds_",
-        "type": "uint256[]"
-      },
-      {
         "internalType": "bool",
         "name": "reset_",
         "type": "bool"
@@ -922,24 +867,6 @@
     "name": "setToken",
     "outputs": [],
     "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "tokenId_",
-        "type": "uint256"
-      },
-      {
-        "internalType": "string",
-        "name": "tokenUri_",
-        "type": "string"
-      }
-    ],
-    "name": "setTokenURI",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -957,7 +884,31 @@
   },
   {
     "inputs": [],
-    "name": "startTime",
+    "name": "statusFlag",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "stepBalance",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1004,49 +955,6 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "index",
-        "type": "uint256"
-      }
-    ],
-    "name": "tokenByIndex",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "index",
-        "type": "uint256"
-      }
-    ],
-    "name": "tokenOfOwnerByIndex",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
         "name": "tokenId",
         "type": "uint256"
       }
@@ -1070,6 +978,19 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalSupplyTokens",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
       }
     ],
     "stateMutability": "view",
